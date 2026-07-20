@@ -75,7 +75,7 @@ npm run build   # production build
 ## Tech
 
 Next.js (App Router) · TypeScript · Tailwind CSS · Recharts · papaparse · zod ·
-Anthropic Claude (`claude-opus-4-8`) via the hosted API with a user-supplied key. No vector
+Anthropic Claude (`claude-sonnet-5`) via the hosted API with a user-supplied key. No vector
 DB, no RAG — the guide fits in context and is loaded whole as the system prompt.
 
 ## Knowledge base & attribution

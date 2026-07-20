@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 // The user brings their own Anthropic API key, sent per-request. Never log it.
-export const MODEL = 'claude-opus-4-8';
+export const MODEL = 'claude-sonnet-5';
 
 // Header convention for passing the per-request key. Used consistently everywhere.
 export const KEY_HEADER = 'x-anthropic-key';
