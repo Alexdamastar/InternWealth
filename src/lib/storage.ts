@@ -2,13 +2,21 @@
 // LLM auth happens server-side via the machine's AWS credentials (Bedrock), so
 // there is no API key to store in the browser at all.
 
-import type { AllocationResult, Goal, Snapshot, Transaction, UserProfile } from './types';
+import type {
+  AllocationResult,
+  Goal,
+  Snapshot,
+  TaxProfile,
+  Transaction,
+  UserProfile,
+} from './types';
 
 const KEYS = {
   profile: 'internwealth:profile',
   goals: 'internwealth:goals',
   transactions: 'internwealth:transactions',
   snapshots: 'internwealth:snapshots',
+  taxProfile: 'internwealth:taxProfile',
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined';
@@ -39,6 +47,10 @@ export const setGoals = (g: Goal[]) => writeJSON(KEYS.goals, g);
 
 export const getTransactions = () => readJSON<Transaction[]>(KEYS.transactions) ?? [];
 export const setTransactions = (t: Transaction[]) => writeJSON(KEYS.transactions, t);
+
+// ---- Tax profile (calculator inputs + computed take-home) ----
+export const getTaxProfile = () => readJSON<TaxProfile>(KEYS.taxProfile);
+export const setTaxProfile = (t: TaxProfile) => writeJSON(KEYS.taxProfile, t);
 
 // ---- Snapshots ----
 export function getSnapshots(): Snapshot[] {

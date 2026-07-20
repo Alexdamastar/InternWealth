@@ -50,6 +50,20 @@ export interface UserProfile {
   internshipEndsSoon: boolean;
 }
 
+// Inputs the intern gives the tax calculator. Persisted so the estimate (and
+// the take-home it feeds into the plan) survives navigation. `takeHomeMonthly`
+// is the calculator's output that the plan reads as post-tax income.
+export interface TaxProfile {
+  grossMonthlyIncome: number;
+  monthsWorked: number;
+  filingStatus: 'single' | 'married_jointly';
+  workState: string;
+  homeState: string;
+  // The most recently computed monthly take-home, saved so /plan can use it as
+  // the allocatable-income basis without recomputing. Undefined until computed.
+  takeHomeMonthly?: number;
+}
+
 export type GoalKind =
   | 'emergency'
   | 'school'

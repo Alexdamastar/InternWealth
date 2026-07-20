@@ -71,7 +71,8 @@ export default function ChatPanel({
       if (!data.reply) {
         setNotice(
           'The assistant is unavailable right now (check your AWS credentials / Bedrock access). ' +
-            'You can use the "Skip & use sample profile" button below, or try again.',
+            'You can use the "Skip & use sample profile" button below, or try again.' +
+            (data.error ? `\n\nDetails: ${data.error}` : ''),
         );
         return;
       }
@@ -133,7 +134,7 @@ export default function ChatPanel({
       </div>
 
       {notice && (
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 whitespace-pre-line">
           {notice}
         </div>
       )}
