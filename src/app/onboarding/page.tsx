@@ -62,37 +62,46 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Let&apos;s set up your goals</h1>
-        <p className="text-sm text-gray-600">
-          Chat on the left, or edit the plan on the right directly — whichever you
-          prefer. When it looks right, continue to your allocation.
+    <div className="space-y-8">
+      <header className="rise">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
+          Step 01 · Goals
         </p>
-      </div>
+        <h1 className="font-display font-semibold text-3xl tracking-tight">
+          Let&apos;s set up your goals
+        </h1>
+        <p className="text-sm text-ink-2 mt-2 max-w-2xl leading-relaxed">
+          Chat on the left, or edit the plan on the right directly — whichever
+          you prefer. When it looks right, continue to your allocation.
+        </p>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 rise" style={{ animationDelay: '0.1s' }}>
         <ChatPanel plan={plan} onPlanUpdate={setPlan} />
 
         {/* Live, editable working plan */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-sm">Your working plan</h3>
+        <div className="bg-card border border-line shadow-card p-5 space-y-4 h-fit">
+          <div className="flex items-center justify-between border-b border-line pb-3">
+            <h3 className="font-display font-semibold text-lg">
+              Your working plan
+            </h3>
             {plan?.complete && (
-              <span className="text-xs text-emerald-600 font-medium">Ready ✓</span>
+              <span className="font-mono text-xs text-good font-semibold uppercase tracking-wider">
+                Ready ✓
+              </span>
             )}
           </div>
 
           {!plan ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-500">
-                As you chat, I&apos;ll summarize your situation and goals here — income,
-                summer vs. school-year expenses, emergency fund, Roth, and more. You
-                can also fill it in yourself.
+              <p className="text-sm text-ink-2 leading-relaxed">
+                As you chat, I&apos;ll summarize your situation and goals here —
+                income, summer vs. school-year expenses, emergency fund, Roth,
+                and more. You can also fill it in yourself.
               </p>
               <button
                 onClick={() => setPlan(EMPTY_PLAN)}
-                className="text-sm text-indigo-600 hover:underline"
+                className="text-sm text-moss font-semibold hover:underline underline-offset-2"
               >
                 Or start filling it in manually →
               </button>
@@ -104,26 +113,33 @@ export default function OnboardingPage() {
           <button
             onClick={continueToPlan}
             disabled={!canContinue}
-            className="w-full bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-moss text-paper px-4 py-2.5 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {canContinue ? 'Continue to my plan →' : 'Add your income & expenses to continue'}
+            {canContinue
+              ? 'Continue to my plan →'
+              : 'Add your income & expenses to continue'}
           </button>
           {plan && !canContinue && (
-            <p className="text-xs text-gray-500">
-              Enter at least your monthly income and expenses (chat or type them in) —
-              including how they differ between the summer and the school year.
+            <p className="text-xs text-faint leading-relaxed">
+              Enter at least your monthly income and expenses (chat or type them
+              in) — including how they differ between the summer and the school
+              year.
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-gray-500">
-          Short on time or no API key? Skip the chat and start from a realistic sample.
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 rise"
+        style={{ animationDelay: '0.2s' }}
+      >
+        <p className="text-xs text-faint">
+          Short on time or no API key? Skip the chat and start from a realistic
+          sample.
         </p>
         <button
           onClick={useSample}
-          className="shrink-0 bg-white border border-indigo-600 text-indigo-600 rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-50"
+          className="shrink-0 border border-moss text-moss px-4 py-2 text-sm font-semibold hover:bg-moss hover:text-paper transition-colors"
         >
           Skip &amp; use sample profile
         </button>

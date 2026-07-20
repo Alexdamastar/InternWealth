@@ -38,20 +38,34 @@ export default function ApiKeyGate({ children }: { children: React.ReactNode }) 
 
   if (!hasKey) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-12">
-        <h1 className="text-2xl font-semibold mb-3">Bring your own API key</h1>
-        <p className="text-sm text-gray-600 mb-4">
-          InternWealth is fully open source and runs locally. There&apos;s no
-          server we own — your statements and goals live only on your machine
-          (browser storage). The only thing that ever leaves is the specific text
-          you send to Anthropic&apos;s API under your own key, and nothing is
-          persisted anywhere but your local disk.
+      <div className="max-w-xl mx-auto px-4 py-16 flex-1 rise">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-4">
+          Before we begin
         </p>
-        <p className="text-sm text-gray-600 mb-4">
-          Your key is stored in this tab&apos;s <code>sessionStorage</code>,
-          cleared when you close the tab. It is never committed, never logged.
-        </p>
-        <label className="block text-sm font-medium mb-1" htmlFor="apiKey">
+        <h1 className="font-display font-semibold text-3xl tracking-tight mb-4">
+          Bring your own API key
+        </h1>
+        <div className="space-y-3 text-sm text-ink-2 leading-relaxed mb-6">
+          <p>
+            InternWealth is fully open source and runs locally. There&apos;s no
+            server we own — your statements and goals live only on your machine
+            (browser storage). The only thing that ever leaves is the specific
+            text you send to Anthropic&apos;s API under your own key, and nothing
+            is persisted anywhere but your local disk.
+          </p>
+          <p>
+            Your key is stored in this tab&apos;s{' '}
+            <code className="font-mono text-xs bg-line/50 px-1 py-0.5">
+              sessionStorage
+            </code>
+            , cleared when you close the tab. It is never committed, never
+            logged.
+          </p>
+        </div>
+        <label
+          className="block text-xs font-mono uppercase tracking-wider text-faint mb-1.5"
+          htmlFor="apiKey"
+        >
           Anthropic API key
         </label>
         <input
@@ -61,20 +75,20 @@ export default function ApiKeyGate({ children }: { children: React.ReactNode }) 
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && save()}
           placeholder="sk-ant-..."
-          className="w-full border border-gray-300 rounded-md px-3 py-2 mb-3 font-mono text-sm"
+          className="w-full bg-card border border-line px-3 py-2.5 mb-4 font-mono text-sm placeholder:text-faint focus:border-moss"
           autoComplete="off"
         />
         <button
           onClick={save}
           disabled={!draft.trim()}
-          className="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
+          className="bg-moss text-paper px-6 py-2.5 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Save key &amp; continue
         </button>
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="text-xs text-faint mt-5 leading-relaxed">
           Get a key at{' '}
           <a
-            className="underline"
+            className="underline hover:text-ink"
             href="https://console.anthropic.com/settings/keys"
             target="_blank"
             rel="noreferrer"
@@ -90,10 +104,10 @@ export default function ApiKeyGate({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <div className="max-w-5xl mx-auto px-4 pt-2 text-right">
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-2 text-right">
         <button
           onClick={reset}
-          className="text-xs text-gray-400 hover:text-gray-600 underline"
+          className="text-xs text-faint hover:text-ink underline decoration-line underline-offset-2"
         >
           Clear API key
         </button>
