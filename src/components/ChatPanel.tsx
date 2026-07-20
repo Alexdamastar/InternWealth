@@ -73,10 +73,13 @@ export default function ChatPanel({
         return;
       }
 
-      const display = stripJsonBlock(data.reply);
+      // Keep the RAW reply (including the ```json working-plan block) in the
+      // history we send back to the API. The model needs to see its own prior
+      // blocks in-context to keep emitting an updated one every turn — strip only
+      // at render time. Without this, the plan updates once then goes stale.
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: display || "Great — I've got what I need!" },
+        { role: 'assistant', content: data.reply || "Great — I've got what I need!" },
       ]);
 
       if (data.workingPlan) {
@@ -107,7 +110,10 @@ export default function ChatPanel({
               }`}
             >
               {m.role === 'assistant' ? (
-                <Markdown content={m.content} className="space-y-2" />
+                <Markdown
+                  content={stripJsonBlock(m.content) || "Got it — I've updated your plan on the right."}
+                  className="space-y-2"
+                />
               ) : (
                 <span className="whitespace-pre-line">{m.content}</span>
               )}
