@@ -31,8 +31,10 @@ function stripJsonBlock(text: string): string {
 }
 
 export default function ChatPanel({
+  plan,
   onPlanUpdate,
 }: {
+  plan?: WorkingPlan | null;
   onPlanUpdate: (plan: WorkingPlan) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -61,7 +63,7 @@ export default function ChatPanel({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', [KEY_HEADER]: key },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, workingPlan: plan ?? undefined }),
       });
       const data = (await res.json()) as {
         reply: string | null;

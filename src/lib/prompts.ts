@@ -8,7 +8,25 @@ const KB_PREFIX = `${GUIDE_TEXT}
 
 ${KB_FACT_NOTES}`;
 
-export function chatSystem(): string {
+export function chatSystem(currentPlan?: unknown): string {
+  // The intern can edit the working plan directly in the side panel, so we feed
+  // the current plan back to the model as the latest source of truth. Context
+  // only — stringify defensively and omit it entirely if it's nullish or throws.
+  let planContext = '';
+  if (currentPlan != null) {
+    try {
+      planContext = `
+
+---
+CURRENT WORKING PLAN (the intern can edit this directly in the side panel — treat it as the latest source of truth, especially any manual edits that differ from what was said in chat). Read it and reference it naturally when relevant; when you emit your updated working-plan json block, START from these values and only change what the conversation warrants:
+${JSON.stringify(currentPlan, null, 2)}
+---
+`;
+    } catch {
+      planContext = '';
+    }
+  }
+
   return `You are InternWealth, a financial guide for software-engineering interns. Base ALL advice on the following guide. Never invent numbers.
 
 ${KB_PREFIX}
@@ -47,7 +65,7 @@ WORKING PLAN — you maintain a running plan ON THE SIDE. At the END OF EVERY ME
 - "complete" is false until you have gathered enough to fill the profile confidently (INCLUDING school-year expenses). Set it to true only once the profile is solid and you have told the intern the plan looks ready — this unlocks their "Continue to my plan" button.
 - Goal.kind enum values: "emergency" (emergency fund / HYSA), "school" (school-year expenses), "roth" (Roth IRA), "401k" (employer 401k), "brokerage" (taxable brokerage), "custom" (anything else the intern names). Goal.priority is an integer where LOWER means HIGHER priority (priority 1 is funded before priority 2). targetAmount is optional — include it when a dollar target makes sense. Order goals following the guide's ideal priority: emergency fund, then school-year expenses, then Roth IRA, then 401(k) only if the match realistically vests, then brokerage.
 
-The prose part of your message (everything before the json block) is what the intern reads as chat — keep it warm and short and write it in Markdown. The json block is hidden from the chat and only drives the side panel. Never compute an allocation plan yourself — a separate deterministic engine does that.`;
+The prose part of your message (everything before the json block) is what the intern reads as chat — keep it warm and short and write it in Markdown. The json block is hidden from the chat and only drives the side panel. Never compute an allocation plan yourself — a separate deterministic engine does that.${planContext}`;
 }
 
 export function categorizeSystem(): string {

@@ -72,7 +72,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <ChatPanel onPlanUpdate={setPlan} />
+        <ChatPanel plan={plan} onPlanUpdate={setPlan} />
 
         {/* Live, editable working plan */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">

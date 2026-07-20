@@ -6,6 +6,10 @@ import type { ChatMessage, Goal, UserProfile } from '@/lib/types';
 
 interface ChatRequest {
   messages: ChatMessage[];
+  // The current working plan from the UI (including the intern's manual edits in
+  // the side panel). Passed to the system prompt as context only — never trusted
+  // or strictly parsed; the LLM re-emits its own validated block every turn.
+  workingPlan?: unknown;
 }
 
 // Zod schemas built inline to match types.ts exactly. Numeric strings are coerced
@@ -115,7 +119,7 @@ export async function POST(req: Request) {
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 4096,
-      system: chatSystem(),
+      system: chatSystem(body.workingPlan),
       messages,
     });
 
