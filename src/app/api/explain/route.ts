@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { makeClient, MODEL, getKeyFromRequest } from '@/lib/anthropic';
+import { makeClient, MODEL } from '@/lib/anthropic';
 import { explainSystem } from '@/lib/prompts';
 import type {
   AllocationResult,
@@ -17,21 +17,13 @@ interface ExplainRequest {
 
 // POST /api/explain
 // Input JSON body: { allocation, goals, profile, spendingByCategory }
-// Key comes from the 'x-anthropic-key' header.
+// Auth uses the machine's AWS credentials via Bedrock — no key in the request.
 // On success: { explanation: string }.
 // On any error: HTTP 200 with { explanation: null, error: string } so the client
 // can gracefully fall back to engine rationale strings.
-// NEVER log the key or the full request body.
+// NEVER log AWS credentials or the full request body.
 export async function POST(req: Request) {
   try {
-    const apiKey = getKeyFromRequest(req);
-    if (!apiKey) {
-      return NextResponse.json({
-        explanation: null,
-        error: 'Missing Anthropic API key.',
-      });
-    }
-
     const body = (await req.json()) as ExplainRequest;
     const userPayload = {
       allocation: body.allocation,
@@ -40,7 +32,7 @@ export async function POST(req: Request) {
       spendingByCategory: body.spendingByCategory,
     };
 
-    const client = makeClient(apiKey);
+    const client = makeClient();
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,

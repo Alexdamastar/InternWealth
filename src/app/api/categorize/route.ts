@@ -1,6 +1,6 @@
-// POST /api/categorize — categorize transactions via Anthropic, with a
-// deterministic local fallback. ALWAYS returns HTTP 200 { transactions }.
-// The API key arrives in the x-anthropic-key header and is NEVER logged.
+// POST /api/categorize — categorize transactions via Anthropic on Bedrock, with
+// a deterministic local fallback. ALWAYS returns HTTP 200 { transactions }.
+// Auth uses the machine's AWS credentials; they are NEVER logged.
 // See TECHNICAL_PLAN.md §6 / §9.
 
 import { categorizeLocal } from '@/lib/categorize';
@@ -104,15 +104,8 @@ export async function POST(req: Request) {
     return Response.json({ transactions: [] }, { status: 200 });
   }
 
-  const key = req.headers.get('x-anthropic-key');
-
-  // No key -> deterministic local categorization.
-  if (!key) {
-    return Response.json({ transactions: categorizeLocal(transactions) }, { status: 200 });
-  }
-
   try {
-    const client = makeClient(key);
+    const client = makeClient();
     const result: Transaction[] = [];
     for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
       const batch = transactions.slice(i, i + BATCH_SIZE);
@@ -121,7 +114,7 @@ export async function POST(req: Request) {
     }
     return Response.json({ transactions: result }, { status: 200 });
   } catch {
-    // Any failure (auth, network, parse) -> local fallback. Never log the key.
+    // Any failure (auth, network, parse) -> local fallback. Never log credentials.
     return Response.json({ transactions: categorizeLocal(transactions) }, { status: 200 });
   }
 }

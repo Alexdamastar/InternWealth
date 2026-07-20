@@ -1,11 +1,10 @@
 // Client-side persistence via localStorage. No server, no auth. See §2.
-// The Anthropic API key is kept in sessionStorage (not localStorage) so it is
-// dropped when the tab closes and is never persisted to disk long-term.
+// LLM auth happens server-side via the machine's AWS credentials (Bedrock), so
+// there is no API key to store in the browser at all.
 
 import type { AllocationResult, Goal, Snapshot, Transaction, UserProfile } from './types';
 
 const KEYS = {
-  apiKey: 'internwealth:apiKey',
   profile: 'internwealth:profile',
   goals: 'internwealth:goals',
   transactions: 'internwealth:transactions',
@@ -13,22 +12,6 @@ const KEYS = {
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined';
-
-// ---- API key (sessionStorage; never localStorage, never logged) ----
-export function getApiKey(): string | null {
-  if (!isBrowser()) return null;
-  return window.sessionStorage.getItem(KEYS.apiKey);
-}
-
-export function setApiKey(key: string): void {
-  if (!isBrowser()) return;
-  window.sessionStorage.setItem(KEYS.apiKey, key.trim());
-}
-
-export function clearApiKey(): void {
-  if (!isBrowser()) return;
-  window.sessionStorage.removeItem(KEYS.apiKey);
-}
 
 // ---- Generic JSON helpers ----
 function readJSON<T>(key: string): T | null {
