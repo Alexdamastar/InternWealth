@@ -47,10 +47,46 @@ const workingPlanSchema = z.object({
   complete: looseBool.optional(),
 });
 
-// Pull the first fenced ```json ... ``` block out of the reply text.
+// Pull the ```json ... ``` block out of the reply text. Falls back to an
+// UNCLOSED fence (```json to end-of-string) so a reply that truncated mid-JSON
+// can still be salvaged — we then try to repair the JSON before parsing.
 function extractJsonBlock(reply: string): string | null {
-  const match = reply.match(/```json\s*([\s\S]*?)```/i);
-  return match ? match[1].trim() : null;
+  const closed = reply.match(/```json\s*([\s\S]*?)```/i);
+  if (closed) return closed[1].trim();
+  const open = reply.match(/```json\s*([\s\S]*)$/i);
+  return open ? open[1].trim() : null;
+}
+
+// Best-effort repair of a JSON string that was cut off mid-emit: drop a trailing
+// incomplete token, then close any still-open strings/arrays/objects. Returns the
+// original string unchanged if it already looks balanced.
+function repairTruncatedJson(raw: string): string {
+  let s = raw.trim();
+  // Remove a dangling incomplete final token (e.g. `"label": "brok`) by trimming
+  // back to the last structurally safe boundary.
+  const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  const lastComma = s.lastIndexOf(',');
+  if (lastComma > lastBrace) s = s.slice(0, lastComma);
+
+  // Balance quotes/brackets by walking the string outside of strings.
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (const ch of s) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === '}' || ch === ']') stack.pop();
+  }
+  if (inString) s += '"';
+  while (stack.length) s += stack.pop();
+  return s;
 }
 
 // POST /api/chat
@@ -73,9 +109,12 @@ export async function POST(req: Request) {
     const messages = body.messages ?? [];
 
     const client = makeClient(apiKey);
+    // Roomy budget: the reply carries both prose AND the full working-plan JSON
+    // (summary + profile + goals). 1024 truncated it mid-JSON, which broke the
+    // fence so nothing parsed and raw JSON leaked into the chat.
     const msg = await client.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 4096,
       system: chatSystem(),
       messages,
     });
@@ -90,7 +129,14 @@ export async function POST(req: Request) {
     const jsonBlock = extractJsonBlock(reply);
     if (jsonBlock) {
       try {
-        const parsed = workingPlanSchema.parse(JSON.parse(jsonBlock));
+        let obj: unknown;
+        try {
+          obj = JSON.parse(jsonBlock);
+        } catch {
+          // The block may have been truncated mid-emit — try to repair it.
+          obj = JSON.parse(repairTruncatedJson(jsonBlock));
+        }
+        const parsed = workingPlanSchema.parse(obj);
         const goals: Goal[] = parsed.goals.map((g, index) => ({
           id: g.id && g.id.trim() !== '' ? g.id : `g-${index}`,
           label: g.label,

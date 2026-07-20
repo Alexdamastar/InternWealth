@@ -21,8 +21,13 @@ const GREETING: ChatMessage = {
 };
 
 // Hide the fenced ```json ... ``` block so the user sees prose, not raw JSON.
+// Handles both a properly closed fence and an UNCLOSED one (```json to end),
+// so a reply that truncated mid-JSON never leaks raw JSON into the chat bubble.
 function stripJsonBlock(text: string): string {
-  return text.replace(/```json\s*[\s\S]*?```/gi, '').trim();
+  return text
+    .replace(/```json\s*[\s\S]*?```/gi, '')
+    .replace(/```json\s*[\s\S]*$/gi, '')
+    .trim();
 }
 
 export default function ChatPanel({
