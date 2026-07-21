@@ -166,7 +166,7 @@ export default function ChatPanel({
           ref={inputRef}
           rows={1}
           className="flex-1 resize-none bg-paper/60 border border-line px-3 py-2 text-sm leading-relaxed placeholder:text-faint focus:border-moss max-h-40 overflow-y-auto"
-          placeholder="Type your answer…  (Enter to send, Shift+Enter for a new line)"
+          placeholder="Type your answer…  (Enter to send)"
           value={input}
           disabled={loading}
           onChange={(e) => setInput(e.target.value)}

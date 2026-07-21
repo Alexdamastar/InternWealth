@@ -309,13 +309,13 @@ describe('show-the-math (step.math)', () => {
     });
     const [emergency] = allocate(profile, [], 20000).steps;
     expect(emergency.math[0]).toBe(
-      'target = 3 months × $1,400 (school-year expenses) = $4,200',
+      'Target: 3 months × $1,400 (school-year expenses) = $4,200.',
     );
     expect(emergency.math[1]).toBe(
-      'still needed = $4,200 target − $1,000 already saved = $3,200',
+      'Still needed: $4,200 target − $1,000 already saved = $3,200.',
     );
     expect(emergency.math[2]).toBe(
-      'allocated = min($3,200 needed, $20,000 available) = $3,200',
+      'Allocated: the smaller of $3,200 needed and $20,000 available = $3,200.',
     );
   });
 
@@ -324,14 +324,14 @@ describe('show-the-math (step.math)', () => {
     const result = allocate(profile, [], 20000);
     const roth = result.steps.find((s) => s.bucket === 'roth')!;
     expect(roth.math[0]).toBe(
-      'room left = $7,500 annual limit − $2,000 already contributed = $5,500',
+      'Room left: $7,500 annual limit − $2,000 already contributed = $5,500.',
     );
   });
 
   it('surplus math shows the waterfall subtraction and the split percentage', () => {
     const result = allocate(makeProfile(), [], 20000, 3, split(0, 100, 0));
     const brokerage = result.steps.find((s) => s.bucket === 'brokerage')!;
-    expect(brokerage.math[0]).toContain('surplus =');
+    expect(brokerage.math[0]).toContain('Surplus:');
     expect(brokerage.math[1]).toContain('× 100% (your split)');
   });
 

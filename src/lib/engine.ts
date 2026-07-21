@@ -218,12 +218,12 @@ export function allocate(
     0,
   );
   const splitMath = (choice: SurplusChoice): string[] => [
-    `surplus = ${usd(totalAllocatable)} in − ${usd(emergencyAmount)} emergency − ${usd(schoolAmount)} school − ${usd(rothAmount)} Roth = ${usd(surplus)}`,
+    `Surplus: ${usd(totalAllocatable)} in − ${usd(emergencyAmount)} emergency − ${usd(schoolAmount)} school − ${usd(rothAmount)} Roth = ${usd(surplus)}.`,
     surplusWeightSum > 0
-      ? `${choice} share = ${usd(surplus)} × ${normalized[choice]}% (your split) = ${usd(amounts[choice])}${
-          surplus > 0 ? ' (largest-remainder rounding keeps the dollars exact)' : ''
-        }`
-      : `all weights are 0 → entire surplus defaults to brokerage`,
+      ? `Your ${choice} share: ${usd(surplus)} × ${normalized[choice]}% (your split) = ${usd(amounts[choice])}${
+          surplus > 0 ? ', with largest-remainder rounding so the dollars stay exact' : ''
+        }.`
+      : `All weights are 0, so the entire surplus defaults to brokerage.`,
   ];
 
   const steps: AllocationStep[] = [
@@ -233,13 +233,13 @@ export function allocate(
       amount: emergencyAmount,
       capReached: emergencyNeed > 0 && emergencyAmount >= emergencyNeed,
       math: [
-        `target = ${emergencyMonths} months × ${usd(emergencyMonthlyBasis)} (${
+        `Target: ${emergencyMonths} months × ${usd(emergencyMonthlyBasis)} (${
           profile.schoolYearMonthlyExpenses && profile.schoolYearMonthlyExpenses > 0
             ? 'school-year'
             : 'monthly'
-        } expenses) = ${usd(emergencyTarget)}`,
-        `still needed = ${usd(emergencyTarget)} target − ${usd(profile.hasEmergencyFund)} already saved = ${usd(emergencyNeed)}`,
-        `allocated = min(${usd(emergencyNeed)} needed, ${usd(totalAllocatable)} available) = ${usd(emergencyAmount)}`,
+        } expenses) = ${usd(emergencyTarget)}.`,
+        `Still needed: ${usd(emergencyTarget)} target − ${usd(profile.hasEmergencyFund)} already saved = ${usd(emergencyNeed)}.`,
+        `Allocated: the smaller of ${usd(emergencyNeed)} needed and ${usd(totalAllocatable)} available = ${usd(emergencyAmount)}.`,
       ],
       rationale:
         `Build a ${emergencyMonths}-month emergency fund first. The 3-6 month ` +
@@ -261,10 +261,10 @@ export function allocate(
       amount: schoolAmount,
       capReached: schoolTarget > 0 && schoolAmount >= schoolTarget,
       math: [
-        `remaining after emergency = ${usd(totalAllocatable)} − ${usd(emergencyAmount)} = ${usd(totalAllocatable - emergencyAmount)}`,
+        `Remaining after emergency fund: ${usd(totalAllocatable)} − ${usd(emergencyAmount)} = ${usd(totalAllocatable - emergencyAmount)}.`,
         schoolTarget > 0
-          ? `allocated = min(${usd(schoolTarget)} goal, ${usd(totalAllocatable - emergencyAmount)} remaining) = ${usd(schoolAmount)}`
-          : `no school-year goal set → ${usd(0)}`,
+          ? `Allocated: the smaller of your ${usd(schoolTarget)} goal and ${usd(totalAllocatable - emergencyAmount)} remaining = ${usd(schoolAmount)}.`
+          : `No school-year goal set, so nothing is reserved here (${usd(0)}).`,
       ],
       rationale:
         schoolGoal && schoolTarget > 0
@@ -281,9 +281,9 @@ export function allocate(
       amount: rothAmount,
       capReached: rothRoom > 0 && rothAmount >= rothRoom,
       math: [
-        `room left = ${usd(ROTH_IRA_ANNUAL_LIMIT_2026)} annual limit − ${usd(profile.rothContributedThisYear)} already contributed = ${usd(rothRoom)}`,
-        `remaining after school = ${usd(totalAllocatable)} − ${usd(emergencyAmount)} − ${usd(schoolAmount)} = ${usd(totalAllocatable - emergencyAmount - schoolAmount)}`,
-        `allocated = min(${usd(rothRoom)} room, ${usd(totalAllocatable - emergencyAmount - schoolAmount)} remaining) = ${usd(rothAmount)}`,
+        `Room left: ${usd(ROTH_IRA_ANNUAL_LIMIT_2026)} annual limit − ${usd(profile.rothContributedThisYear)} already contributed = ${usd(rothRoom)}.`,
+        `Remaining after school-year expenses: ${usd(totalAllocatable)} − ${usd(emergencyAmount)} − ${usd(schoolAmount)} = ${usd(totalAllocatable - emergencyAmount - schoolAmount)}.`,
+        `Allocated: the smaller of ${usd(rothRoom)} room and ${usd(totalAllocatable - emergencyAmount - schoolAmount)} remaining = ${usd(rothAmount)}.`,
       ],
       rationale:
         `Contribute up to the Roth IRA annual limit (${usd(ROTH_IRA_ANNUAL_LIMIT_2026)}), ` +

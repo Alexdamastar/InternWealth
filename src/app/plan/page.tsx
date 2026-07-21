@@ -299,17 +299,23 @@ export default function PlanPage() {
                 {/* Show the math (4.1): the engine's exact arithmetic with the
                     actual inputs, expandable per step. */}
                 <details className="mt-2 group">
-                  <summary className="cursor-pointer font-mono text-xs text-moss hover:text-moss-deep select-none list-none">
-                    <span className="group-open:hidden">show the math ▸</span>
-                    <span className="hidden group-open:inline">hide the math ▾</span>
+                  <summary className="cursor-pointer text-xs font-medium text-moss hover:text-moss-deep select-none list-none">
+                    <span className="group-open:hidden">Show the math ▸</span>
+                    <span className="hidden group-open:inline">Hide the math ▾</span>
                   </summary>
-                  <div className="mt-2 border-l-2 border-moss/30 bg-paper/60 px-3 py-2 space-y-1">
+                  <ul className="mt-2 space-y-1.5">
                     {step.math.map((line, j) => (
-                      <p key={j} className="font-mono text-xs text-ink-2 leading-relaxed">
-                        {line}
-                      </p>
+                      <li
+                        key={j}
+                        className="flex gap-2 text-xs text-ink-2 leading-relaxed tabular-nums"
+                      >
+                        <span aria-hidden className="text-moss/60 select-none">
+                          •
+                        </span>
+                        <span>{line}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </details>
               </div>
             </li>

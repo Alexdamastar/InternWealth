@@ -11,9 +11,9 @@ import TimelineChart from '@/components/TimelineChart';
 
 const FREQUENCIES: { value: PayFrequency; label: string }[] = [
   { value: 'weekly', label: 'Weekly' },
-  { value: 'biweekly', label: 'Biweekly (most common)' },
+  { value: 'biweekly', label: 'Biweekly' },
   { value: 'semimonthly', label: '1st & 15th' },
-  { value: 'monthly', label: 'Monthly' },
+  { value: 'monthly', label: 'Monthly (most common)' },
 ];
 
 interface Props {
