@@ -67,7 +67,7 @@ export default function Home() {
           >
             Load sample statement
           </button>
-          <span className="text-xs text-faint">zero-setup demo, no key needed</span>
+          <span className="text-xs text-faint">zero-setup demo, no AWS access needed</span>
         </div>
       </section>
 
@@ -85,8 +85,8 @@ export default function Home() {
         />
         <Principle
           n="02"
-          title="Runs locally, BYO key"
-          body="No server we own. Your statements and goals live only on your machine. The only thing that leaves is text you send to Anthropic under your own key."
+          title="Your data, your AWS account"
+          body="No server we own. Your statements and goals live only on your machine, and the AI runs on Amazon Bedrock under your own AWS credentials — Bedrock doesn't store your prompts or train on them."
           delay="0.2s"
         />
         <Principle
