@@ -4,6 +4,7 @@
 // Every change calls onChange so the parent can recompute the plan live. §10.4.
 import { useState } from 'react';
 import type { Goal, GoalKind, UserProfile } from '@/lib/types';
+import Dropdown from '@/components/Dropdown';
 
 const KINDS: GoalKind[] = ['emergency', 'school', 'roth', '401k', 'brokerage', 'custom'];
 
@@ -91,19 +92,15 @@ export default function GoalEditor({
           value={profile.rothContributedThisYear}
           onChange={(v) => onProfileChange({ ...profile, rothContributedThisYear: v })}
         />
-        <label className="flex flex-col text-xs text-ink-2 gap-1">
-          401(k) match realistically vests?
-          <select
-            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={profile.employer401kVests ? 'yes' : 'no'}
-            onChange={(e) =>
-              onProfileChange({ ...profile, employer401kVests: e.target.value === 'yes' })
-            }
-          >
-            <option value="no">No (e.g. Amazon intern)</option>
-            <option value="yes">Yes</option>
-          </select>
-        </label>
+        <Dropdown
+          label="401(k) match realistically vests?"
+          value={profile.employer401kVests ? 'yes' : 'no'}
+          onChange={(v) => onProfileChange({ ...profile, employer401kVests: v === 'yes' })}
+          options={[
+            { value: 'no', label: 'No (e.g. Amazon intern)' },
+            { value: 'yes', label: 'Yes' },
+          ]}
+        />
       </div>
 
       {/* Goals list */}
@@ -119,27 +116,24 @@ export default function GoalEditor({
                 value={g.label}
                 onChange={(e) => updateGoal(g.id, { label: e.target.value })}
               />
-              <select
-                className="bg-card border border-line px-1.5 py-1 text-xs focus:border-moss"
+              <Dropdown
+                className="w-28 shrink-0"
                 value={g.kind}
-                onChange={(e) => updateGoal(g.id, { kind: e.target.value as GoalKind })}
-              >
-                {KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {k}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => updateGoal(g.id, { kind: v as GoalKind })}
+                options={KINDS.map((k) => ({ value: k, label: k }))}
+              />
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="target $"
                 className="w-24 bg-card border border-line px-2 py-1 text-xs font-mono focus:border-moss"
                 value={g.targetAmount ?? ''}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/[^0-9]/g, '');
                   updateGoal(g.id, {
-                    targetAmount: e.target.value === '' ? undefined : Number(e.target.value),
-                  })
-                }
+                    targetAmount: digits === '' ? undefined : parseInt(digits, 10),
+                  });
+                }}
               />
               <button
                 onClick={() => removeGoal(g.id)}
@@ -187,12 +181,17 @@ function NumberField({
     <label className="flex flex-col text-xs text-ink-2 gap-1">
       {label}
       <input
-        type="number"
-        min={min}
-        max={max}
+        type="text"
+        inputMode="numeric"
         className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-        value={Number.isFinite(value) ? value : 0}
-        onChange={(e) => onChange(Number(e.target.value))}
+        value={Number.isFinite(value) ? String(value) : '0'}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/[^0-9]/g, '');
+          let n = digits === '' ? 0 : parseInt(digits, 10);
+          if (min !== undefined) n = Math.max(min, n);
+          if (max !== undefined) n = Math.min(max, n);
+          onChange(n);
+        }}
       />
     </label>
   );

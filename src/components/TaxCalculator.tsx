@@ -6,9 +6,18 @@
 // monthly take-home is saved to the tax profile so /plan can allocate post-tax
 // dollars. Controlled component: parent owns the TaxProfile and passes value +
 // onChange, so the estimate and any downstream plan share one source of truth.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { estimateTaxes, MODELED_STATES, type FilingStatus, type TaxInputs } from '@/lib/tax';
 import type { TaxProfile } from '@/lib/types';
+import Dropdown from '@/components/Dropdown';
+
+// State options for the work/home dropdowns, computed once.
+const STATE_OPTIONS = MODELED_STATES.map((s) => ({
+  value: s.code,
+  label: `${s.code} — ${s.name}${s.kind === 'none' ? ' (no income tax)' : ''}`,
+}));
+
+const LABEL_CLASS = 'flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint';
 
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -75,37 +84,41 @@ export default function TaxCalculator({ value, onChange }: Props) {
             }}
           />
         </label>
-        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
-          Filing status
-          <select
-            className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={value.filingStatus}
-            onChange={(e) => patch({ filingStatus: e.target.value as FilingStatus })}
-          >
-            <option value="single">Single</option>
-            <option value="married_jointly">Married, filing jointly</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
-          Can a parent claim you as a dependent?
-          <select
-            className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={value.canBeClaimedAsDependent ? 'yes' : 'no'}
-            onChange={(e) => patch({ canBeClaimedAsDependent: e.target.value === 'yes' })}
-          >
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
-          </select>
-        </label>
-        <StateSelect
+        <Dropdown
+          label="Filing status"
+          labelClassName={LABEL_CLASS}
+          value={value.filingStatus}
+          onChange={(v) => patch({ filingStatus: v as FilingStatus })}
+          options={[
+            { value: 'single', label: 'Single' },
+            { value: 'married_jointly', label: 'Married, filing jointly' },
+          ]}
+        />
+        <Dropdown
+          label="Can a parent claim you as a dependent?"
+          labelClassName={LABEL_CLASS}
+          value={value.canBeClaimedAsDependent ? 'yes' : 'no'}
+          onChange={(v) => patch({ canBeClaimedAsDependent: v === 'yes' })}
+          options={[
+            { value: 'no', label: 'No' },
+            { value: 'yes', label: 'Yes' },
+          ]}
+        />
+        <Dropdown
           label="Work state (where you intern)"
+          labelClassName={LABEL_CLASS}
           value={value.workState}
           onChange={(v) => patch({ workState: v })}
+          options={STATE_OPTIONS}
+          placeholder="Select state…"
         />
-        <StateSelect
+        <Dropdown
           label="Home state (legal residence)"
+          labelClassName={LABEL_CLASS}
           value={value.homeState}
           onChange={(v) => patch({ homeState: v })}
+          options={STATE_OPTIONS}
+          placeholder="Select state…"
         />
       </div>
 
@@ -239,87 +252,6 @@ export default function TaxCalculator({ value, onChange }: Props) {
         </a>
         . Estimates only, not tax advice.
       </p>
-    </div>
-  );
-}
-
-// Custom dropdown: a native <select>'s option list can't be height-constrained
-// with CSS (the browser sizes the popup), so with 30+ states it filled the whole
-// screen. This renders a fixed-height, scrollable panel instead. Closes on outside
-// click or Escape.
-function StateSelect({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const selected = MODELED_STATES.find((s) => s.code === value);
-
-  function choose(code: string) {
-    onChange(code);
-    setOpen(false);
-  }
-
-  return (
-    <div className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
-      {label}
-      <div ref={ref} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="flex w-full items-center justify-between gap-2 bg-paper/60 border border-line px-2 py-1.5 text-left text-sm normal-case tracking-normal focus:border-moss"
-        >
-          <span className={selected ? 'text-ink' : 'text-faint'}>
-            {selected ? `${selected.code} — ${selected.name}` : 'Select state…'}
-          </span>
-          <span aria-hidden className="text-faint">
-            {open ? '▲' : '▼'}
-          </span>
-        </button>
-        {open && (
-          <ul
-            role="listbox"
-            className="absolute z-20 mt-1 max-h-56 w-full overflow-auto border border-line bg-card shadow-card"
-          >
-            {MODELED_STATES.map((s) => (
-              <li key={s.code}>
-                <button
-                  type="button"
-                  onClick={() => choose(s.code)}
-                  className={`block w-full px-2 py-1.5 text-left text-sm normal-case tracking-normal hover:bg-moss/10 ${
-                    s.code === value ? 'bg-moss/5 text-moss font-semibold' : 'text-ink-2'
-                  }`}
-                >
-                  {s.code} — {s.name}
-                  {s.kind === 'none' ? ' (no income tax)' : ''}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </div>
   );
 }
