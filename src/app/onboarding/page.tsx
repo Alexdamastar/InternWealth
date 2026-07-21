@@ -7,11 +7,12 @@
 // happy, they press "Continue to my plan" and THAT profile+goals is what gets
 // sent forward to the engine (/ingest -> /plan). A skip button loads the sample
 // profile so the demo always works offline (no Bedrock access needed). See §10.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ChatPanel from '@/components/ChatPanel';
 import WorkingPlanEditor from '@/components/WorkingPlanEditor';
-import { setGoals, setProfile } from '@/lib/storage';
+import { getTransactions, setGoals, setProfile } from '@/lib/storage';
+import { deriveEssentialMonthly, deriveMonthlyIncome } from '@/lib/categorize';
 import { SAMPLE_GOALS, SAMPLE_PROFILE } from '@/lib/sample';
 import type { UserProfile, WorkingPlan } from '@/lib/types';
 
@@ -38,6 +39,30 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [plan, setPlan] = useState<WorkingPlan | null>(null);
 
+  // If a statement was uploaded in step 1 (Get started), pre-fill the working
+  // plan with the income and internship essentials derived from it, so neither
+  // we nor the model re-asks for what the CSV already answered. Storage is only
+  // readable after mount, hence the intentional post-mount setState.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const txns = getTransactions();
+    if (!txns.length) return;
+    const income = deriveMonthlyIncome(txns);
+    const essential = deriveEssentialMonthly(txns);
+    if (income <= 0 && essential <= 0) return;
+    setPlan((prev) =>
+      prev ?? {
+        ...EMPTY_PLAN,
+        profile: {
+          ...EMPTY_PROFILE,
+          monthlyIncome: Math.max(0, income),
+          essentialMonthlyExpenses: Math.max(0, essential),
+        },
+      },
+    );
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   // The Continue button unlocks when the LLM marks the plan complete OR the
   // intern has manually entered the essentials (income + at least one expense).
   const manuallyReady =
@@ -52,20 +77,20 @@ export default function OnboardingPage() {
     if (!plan) return;
     setProfile(plan.profile);
     setGoals(plan.goals);
-    router.push('/ingest');
+    router.push('/plan');
   }
 
   function useSample() {
     setProfile(SAMPLE_PROFILE);
     setGoals(SAMPLE_GOALS);
-    router.push('/ingest');
+    router.push('/plan');
   }
 
   return (
     <div className="space-y-8">
       <header className="rise">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
-          Step 01 · Goals
+          Step 02 · Goals
         </p>
         <h1 className="font-display font-semibold text-3xl tracking-tight">
           Let&apos;s set up your goals
