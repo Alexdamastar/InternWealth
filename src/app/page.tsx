@@ -55,10 +55,10 @@ export default function Home() {
 
         <div className="flex flex-wrap items-center gap-4 mt-9">
           <Link
-            href="/onboarding"
+            href="/ingest"
             className="bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
           >
-            Start — set my goals →
+            Get started →
           </Link>
           <button
             onClick={loadSample}
