@@ -12,12 +12,12 @@ import Markdown from '@/components/Markdown';
 const GREETING: ChatMessage = {
   role: 'assistant',
   content:
-    "Hey! I'm **InternWealth** 👋 I'll ask three quick pairs of questions — about 2 " +
+    "Hey! I'm **InternWealth** 👋 I'll ask a few quick questions — about 2 " +
     'minutes — and build your personalized plan live on the right as you answer. Rough ' +
     'numbers are fine, and you can edit anything in the side panel later.\n\n' +
     "**To start:**\n" +
     '1. What is your monthly **pre-tax** (gross) income from the internship?\n' +
-    '2. How much do you currently have saved in an **emergency fund** (e.g. a high-yield savings account)?',
+    '2. Roughly what are your monthly **summer expenses** during the internship (rent, food, transport)?',
 };
 
 // Hide the fenced ```json ... ``` block so the user sees prose, not raw JSON.
