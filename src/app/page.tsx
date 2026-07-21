@@ -31,9 +31,9 @@ export default function Home() {
           A field guide to your first real paycheck
         </p>
         <h1 className="font-display font-semibold text-[clamp(2.4rem,6vw,4.2rem)] leading-[1.04] tracking-tight max-w-3xl text-balance">
-          Turn a 21-page finance guide into a{' '}
+          Get a complete financial plan in{' '}
           <em className="text-moss not-italic border-b-4 border-moss/30">
-            5-minute plan.
+            5 minutes.
           </em>
         </h1>
         <div className="mt-7 grid gap-8 lg:grid-cols-[1fr_minmax(240px,300px)] lg:gap-14 items-start">
@@ -48,9 +48,8 @@ export default function Home() {
             brokerage — plus a plain-English explanation.
           </p>
           <blockquote className="border-l-2 border-moss/40 pl-4 text-sm text-faint italic leading-relaxed">
-            &ldquo;No incoming intern reads 21 pages. So we turned that guide
-            into an agent that personalizes it to your actual numbers in 5
-            minutes. That&apos;s paying it forward.&rdquo;
+            &ldquo;Learning how to invest as an intern is hard. Let our agent
+            tell you how.&rdquo;
           </blockquote>
         </div>
 
