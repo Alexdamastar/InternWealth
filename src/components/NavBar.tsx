@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// The journey order doubles as navigation: goals → transactions → plan → progress.
+// The journey order doubles as navigation: get started (transactions) → goals → plan → progress.
 const LINKS = [
+  { href: '/ingest', label: 'Get started' },
   { href: '/onboarding', label: 'Goals' },
-  { href: '/ingest', label: 'Transactions' },
   { href: '/plan', label: 'Plan' },
   { href: '/progress', label: 'Progress' },
 ];
