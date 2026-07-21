@@ -45,7 +45,7 @@ export default function Home() {
               deterministic, personalized allocation plan
             </strong>{' '}
             — emergency fund, school-year expenses, Roth IRA, 401(k), and
-            brokerage — plus a plain-English explanation.
+            brokerage.
           </p>
           <blockquote className="border-l-2 border-moss/40 pl-4 text-sm text-faint italic leading-relaxed">
             &ldquo;Learning how to invest as an intern is hard. Let our agent
