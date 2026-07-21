@@ -91,8 +91,8 @@ export default function Home() {
         />
         <Principle
           n="03"
-          title="Works without an LLM"
-          body="Categorization has a keyword fallback and the plan renders from deterministic rationales, so the core demo never depends on a live API call."
+          title="AI where it helps, math where it counts"
+          body="Claude handles the chat onboarding, transaction categorization, and plain-English writeup; the allocation itself is deterministic. If Bedrock is down, local fallbacks keep every screen working."
           delay="0.3s"
         />
       </section>
