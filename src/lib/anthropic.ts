@@ -1,19 +1,21 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicBedrock } from '@anthropic-ai/bedrock-sdk';
 
-// The user brings their own Anthropic API key, sent per-request. Never log it.
-export const MODEL = 'claude-opus-4-8';
+// The LLM features run through Amazon Bedrock using the machine's own AWS
+// credentials (the standard AWS credential chain — env vars, ~/.aws profiles,
+// SSO, or an instance/container role). Since the app runs locally, those
+// credentials never leave the box. Nothing is committed or logged.
+//
+// Model is a Bedrock model ID / cross-region inference profile. Override with
+// BEDROCK_MODEL_ID (e.g. a region-specific profile like
+// "us.anthropic.claude-sonnet-5") if your account needs it.
+export const MODEL = process.env.BEDROCK_MODEL_ID ?? 'global.anthropic.claude-sonnet-5';
 
-// Header convention for passing the per-request key. Used consistently everywhere.
-export const KEY_HEADER = 'x-anthropic-key';
+// The AWS region Bedrock is called in. Falls back through the usual env vars.
+const REGION =
+  process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
 
-export function makeClient(apiKey: string): Anthropic {
-  return new Anthropic({ apiKey });
-}
-
-// Reads the caller-supplied Anthropic key from the request header. Returns null
-// when absent so callers can gracefully fall back. Never log the returned value.
-export function getKeyFromRequest(req: Request): string | null {
-  const key = req.headers.get(KEY_HEADER);
-  if (!key || key.trim() === '') return null;
-  return key;
+// Build a Bedrock-backed Anthropic client. Credentials come from the default
+// AWS provider chain — we never take them as an argument or read a header.
+export function makeClient(): AnthropicBedrock {
+  return new AnthropicBedrock({ awsRegion: REGION });
 }

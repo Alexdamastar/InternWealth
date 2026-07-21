@@ -6,8 +6,6 @@
 // and hand the parsed plan up to the parent, which shows it live on the side and
 // gates the "Continue" button on `complete`.
 import { useEffect, useRef, useState } from 'react';
-import { KEY_HEADER } from '@/lib/anthropic';
-import { getApiKey } from '@/lib/storage';
 import type { ChatMessage, WorkingPlan } from '@/lib/types';
 import Markdown from '@/components/Markdown';
 
@@ -59,10 +57,9 @@ export default function ChatPanel({
     setLoading(true);
 
     try {
-      const key = getApiKey() ?? '';
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', [KEY_HEADER]: key },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: next, workingPlan: plan ?? undefined }),
       });
       const data = (await res.json()) as {
@@ -73,9 +70,8 @@ export default function ChatPanel({
 
       if (!data.reply) {
         setNotice(
-          data.error === 'no-key'
-            ? 'No Anthropic API key found. Add a key, or use the "Skip & use sample profile" button below to keep going.'
-            : 'The assistant is unavailable right now. You can use the "Skip & use sample profile" button below, or add an API key and try again.',
+          'The assistant is unavailable right now (check your AWS credentials / Bedrock access). ' +
+            'You can use the "Skip & use sample profile" button below, or try again.',
         );
         return;
       }

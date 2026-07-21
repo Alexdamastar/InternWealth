@@ -19,7 +19,6 @@ import {
   getTransactions,
   setGoals as persistGoals,
   setProfile as persistProfile,
-  getApiKey,
   makeSnapshot,
   saveSnapshot,
 } from '@/lib/storage';
@@ -31,7 +30,6 @@ import type {
   TxCategory,
   UserProfile,
 } from '@/lib/types';
-import { KEY_HEADER } from '@/lib/anthropic';
 import AllocationChart from '@/components/AllocationChart';
 import GoalEditor from '@/components/GoalEditor';
 import SurplusSplitter from '@/components/SurplusSplitter';
@@ -103,16 +101,10 @@ export default function PlanPage() {
 
   async function generateExplanation() {
     setExplainState('loading');
-    const key = getApiKey();
-    if (!key) {
-      setExplainState('fallback');
-      setExplanation(null);
-      return;
-    }
     try {
       const res = await fetch('/api/explain', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', [KEY_HEADER]: key },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           allocation: result,
           goals,
@@ -265,8 +257,8 @@ export default function PlanPage() {
         {explainState === 'fallback' && (
           <div className="text-sm text-ink-2 space-y-1.5">
             <p className="text-faint italic mb-2">
-              No API key or the LLM was unavailable — showing the deterministic
-              reasoning instead:
+              The LLM was unavailable (check your AWS / Bedrock access) — showing
+              the deterministic reasoning instead:
             </p>
             {result.steps
               .filter((s) => s.amount > 0)

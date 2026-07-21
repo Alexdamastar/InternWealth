@@ -6,7 +6,7 @@
 // intern can type into any field directly — no LLM required. Once the intern is
 // happy, they press "Continue to my plan" and THAT profile+goals is what gets
 // sent forward to the engine (/ingest -> /plan). A skip button loads the sample
-// profile so the demo always works offline (no API key needed). See §10.
+// profile so the demo always works offline (no Bedrock access needed). See §10.
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ChatPanel from '@/components/ChatPanel';
@@ -134,8 +134,8 @@ export default function OnboardingPage() {
         style={{ animationDelay: '0.2s' }}
       >
         <p className="text-xs text-faint">
-          Short on time or no API key? Skip the chat and start from a realistic
-          sample.
+          Short on time or no Bedrock access? Skip the chat and start from a
+          realistic sample.
         </p>
         <button
           onClick={useSample}

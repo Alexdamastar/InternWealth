@@ -37,13 +37,14 @@ categorizer, and the narrative falls back to the engine's own rationale strings.
 
 ## Privacy
 
-> Fully open source, runs locally, bring your own API key. There's no server we own — your
-> statements and goals live only on your machine. The only thing that ever leaves is the
-> specific text you send to Anthropic's API under your own key, and nothing is persisted
+> Fully open source, runs locally on your own AWS Bedrock access. There's no server we own —
+> your statements and goals live only on your machine. The only thing that ever leaves is the
+> specific text sent to Claude on Bedrock under your own AWS account, and nothing is persisted
 > anywhere but your local disk.
 
-Your API key is held in the browser's `sessionStorage` (cleared when the tab closes). It is
-never committed, never logged, and never read from a committed env file.
+LLM auth happens server-side (in the local Next.js process) using your machine's standard AWS
+credential chain — no API key is stored in the browser at all. AWS credentials are never
+committed and never logged.
 
 ## Educational disclaimer
 
@@ -57,13 +58,22 @@ repeat this.
 ```bash
 cd internwealth
 npm install
+# make sure your AWS credentials are available (env vars, `aws configure`, SSO, etc.)
+# and that your account has Bedrock access to the Claude model.
 npm run dev
 # open http://localhost:3000
 ```
 
-Then either paste your Anthropic API key when prompted (get one at
-[console.anthropic.com](https://console.anthropic.com/settings/keys)) — or just click
-**"Load sample statement"** on the home page for a zero-setup demo that needs no key.
+The LLM features call Claude on Amazon Bedrock using your machine's AWS credentials — nothing
+to paste. Configure with the usual AWS env vars if needed:
+
+```bash
+export AWS_REGION=us-east-1              # region Bedrock is called in
+export BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-5   # optional model/profile override
+```
+
+No Bedrock access? Just click **"Load sample statement"** on the home page for a zero-setup
+demo — the plan, categorization, and rationale all fall back to fully local logic.
 
 ### Tests & build
 
@@ -75,8 +85,8 @@ npm run build   # production build
 ## Tech
 
 Next.js (App Router) · TypeScript · Tailwind CSS · Recharts · papaparse · zod ·
-Anthropic Claude (`claude-opus-4-8`) via the hosted API with a user-supplied key. No vector
-DB, no RAG — the guide fits in context and is loaded whole as the system prompt.
+Anthropic Claude (`claude-sonnet-5`) on Amazon Bedrock via the machine's own AWS credentials.
+No vector DB, no RAG — the guide fits in context and is loaded whole as the system prompt.
 
 ## Knowledge base & attribution
 

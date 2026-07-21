@@ -12,7 +12,7 @@ import {
   deriveMonthlyIncome,
   deriveSpendingByCategory,
 } from '@/lib/categorize';
-import { getApiKey, setTransactions } from '@/lib/storage';
+import { setTransactions } from '@/lib/storage';
 import SpendingChart from '@/components/SpendingChart';
 import type { Transaction, TxCategory } from '@/lib/types';
 
@@ -32,15 +32,12 @@ const CATEGORY_LABELS: Record<TxCategory, string> = {
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-/** Categorize via the API route (LLM when a key is present) with local fallback. */
+/** Categorize via the API route (LLM on Bedrock) with a local fallback. */
 async function categorize(txns: Transaction[]): Promise<Transaction[]> {
-  const key = getApiKey();
-  // No key -> skip the round-trip, categorize locally right here.
-  if (!key) return categorizeLocal(txns);
   try {
     const res = await fetch('/api/categorize', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-anthropic-key': key },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ transactions: txns }),
     });
     const data = (await res.json()) as { transactions?: Transaction[] };
@@ -125,8 +122,9 @@ export default function IngestPage() {
         </h1>
         <p className="text-sm text-ink-2 mt-2 max-w-2xl leading-relaxed">
           Upload a CSV bank statement, paste rows, or load the sample. We
-          categorize each transaction (using your Anthropic key if set,
-          otherwise a built-in keyword categorizer) and summarize your spending.
+          categorize each transaction (via Claude on Bedrock if your AWS access
+          is available, otherwise a built-in keyword categorizer) and summarize
+          your spending.
         </p>
       </header>
 

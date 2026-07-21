@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { makeClient, MODEL, getKeyFromRequest } from '@/lib/anthropic';
+import { makeClient, MODEL } from '@/lib/anthropic';
 import { chatSystem } from '@/lib/prompts';
 import type { ChatMessage, Goal, UserProfile } from '@/lib/types';
 
@@ -95,24 +95,18 @@ function repairTruncatedJson(raw: string): string {
 
 // POST /api/chat
 // Input JSON body: { messages: ChatMessage[] } (already role/content shaped).
-// Key comes from the 'x-anthropic-key' header.
+// Auth uses the machine's AWS credentials via Bedrock — no key in the request.
 // On success: { reply: string, workingPlan?: { summary, profile, goals, complete } }.
 //   The LLM emits a working-plan json block every turn; we parse it into a live
 //   plan the UI renders on the side. `complete` gates the "Continue" button.
-// On missing key: HTTP 200 { reply: null, error: 'no-key' }.
-// On Anthropic error: HTTP 200 { reply: null, error: string }.
-// NEVER log the key or the full request body.
+// On Bedrock error (incl. missing/invalid AWS creds): HTTP 200 { reply: null, error: string }.
+// NEVER log AWS credentials or the full request body.
 export async function POST(req: Request) {
-  const apiKey = getKeyFromRequest(req);
-  if (!apiKey) {
-    return NextResponse.json({ reply: null, error: 'no-key' });
-  }
-
   try {
     const body = (await req.json()) as ChatRequest;
     const messages = body.messages ?? [];
 
-    const client = makeClient(apiKey);
+    const client = makeClient();
     // Roomy budget: the reply carries both prose AND the full working-plan JSON
     // (summary + profile + goals). 1024 truncated it mid-JSON, which broke the
     // fence so nothing parsed and raw JSON leaked into the chat.
