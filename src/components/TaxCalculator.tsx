@@ -6,13 +6,28 @@
 // monthly take-home is saved to the tax profile so /plan can allocate post-tax
 // dollars. Controlled component: parent owns the TaxProfile and passes value +
 // onChange, so the estimate and any downstream plan share one source of truth.
-import { useMemo } from 'react';
-import { estimateTaxes, MODELED_STATES, type FilingStatus } from '@/lib/tax';
+import { useMemo, useState } from 'react';
+import { estimateTaxes, MODELED_STATES, type FilingStatus, type TaxInputs } from '@/lib/tax';
 import type { TaxProfile } from '@/lib/types';
 
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+
+// Map the persisted profile to engine inputs (the optional refinements default
+// to their intern-typical value inside the engine when omitted).
+function toInputs(p: TaxProfile): TaxInputs {
+  return {
+    grossMonthlyIncome: p.grossMonthlyIncome,
+    monthsWorked: p.monthsWorked,
+    filingStatus: p.filingStatus,
+    workState: p.workState,
+    homeState: p.homeState,
+    canBeClaimedAsDependent: p.canBeClaimedAsDependent,
+    otherTaxableIncome: p.otherTaxableIncome,
+    preTaxContributions: p.preTaxContributions,
+  };
+}
 
 interface Props {
   value: TaxProfile;
@@ -20,29 +35,17 @@ interface Props {
 }
 
 export default function TaxCalculator({ value, onChange }: Props) {
-  const result = useMemo(
-    () =>
-      estimateTaxes({
-        grossMonthlyIncome: value.grossMonthlyIncome,
-        monthsWorked: value.monthsWorked,
-        filingStatus: value.filingStatus,
-        workState: value.workState,
-        homeState: value.homeState,
-      }),
-    [value],
+  // Advanced (non-wage income / pre-tax) is opt-in — most interns leave it off.
+  const [showAdvanced, setShowAdvanced] = useState(
+    () => Boolean(value.otherTaxableIncome) || Boolean(value.preTaxContributions),
   );
+  const result = useMemo(() => estimateTaxes(toInputs(value)), [value]);
 
   // Keep the persisted take-home in sync with the live estimate, but only write
   // when it actually changes (avoids an update loop).
   function patch(p: Partial<TaxProfile>) {
     const next = { ...value, ...p };
-    const r = estimateTaxes({
-      grossMonthlyIncome: next.grossMonthlyIncome,
-      monthsWorked: next.monthsWorked,
-      filingStatus: next.filingStatus,
-      workState: next.workState,
-      homeState: next.homeState,
-    });
+    const r = estimateTaxes(toInputs(next));
     onChange({ ...next, takeHomeMonthly: Math.round(r.monthlyTakeHome) });
   }
 
@@ -79,7 +82,17 @@ export default function TaxCalculator({ value, onChange }: Props) {
             <option value="married_jointly">Married, filing jointly</option>
           </select>
         </label>
-        <div />
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          Can a parent claim you as a dependent?
+          <select
+            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            value={value.canBeClaimedAsDependent ? 'yes' : 'no'}
+            onChange={(e) => patch({ canBeClaimedAsDependent: e.target.value === 'yes' })}
+          >
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </label>
         <StateSelect
           label="Work state (where you intern)"
           value={value.workState}
@@ -90,6 +103,36 @@ export default function TaxCalculator({ value, onChange }: Props) {
           value={value.homeState}
           onChange={(v) => patch({ homeState: v })}
         />
+      </div>
+
+      {/* Advanced (opt-in): non-wage income + pre-tax contributions */}
+      <div className="border-t border-gray-100 pt-3">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((s) => !s)}
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+        >
+          {showAdvanced ? '− Hide' : '+ Add'} other income or pre-tax contributions
+        </button>
+        {showAdvanced && (
+          <div className="grid grid-cols-2 gap-x-3 gap-y-3 mt-3">
+            <Money
+              label="Other taxable income for the year ($)"
+              value={value.otherTaxableIncome ?? 0}
+              onChange={(v) => patch({ otherTaxableIncome: v })}
+            />
+            <Money
+              label="Pre-tax IRA/HSA contributions ($)"
+              value={value.preTaxContributions ?? 0}
+              onChange={(v) => patch({ preTaxContributions: v })}
+            />
+            <p className="col-span-2 text-[11px] text-gray-400">
+              Other income = taxable scholarships, interest, or dividends (nothing is withheld on
+              it). Pre-tax contributions to a traditional IRA or HSA lower your taxable income.
+              Leave both at 0 if they don&apos;t apply.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Headline results */}

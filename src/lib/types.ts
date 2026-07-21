@@ -59,6 +59,16 @@ export interface TaxProfile {
   filingStatus: 'single' | 'married_jointly';
   workState: string;
   homeState: string;
+  // Optional refinements from the IRS-style questions worth asking an intern.
+  // Can a parent (or anyone) claim you as a dependent? Caps the standard
+  // deduction — common for students. Defaults false when absent.
+  canBeClaimedAsDependent?: boolean;
+  // Annual non-wage taxable income with no withholding (taxable scholarships,
+  // interest, dividends). Defaults 0.
+  otherTaxableIncome?: number;
+  // Annual pre-tax contributions made outside payroll (traditional IRA / HSA).
+  // Defaults 0.
+  preTaxContributions?: number;
   // The most recently computed monthly take-home, saved so /plan can use it as
   // the allocatable-income basis without recomputing. Undefined until computed.
   takeHomeMonthly?: number;

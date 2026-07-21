@@ -133,6 +133,69 @@ describe('estimateTaxes — dual state', () => {
   });
 });
 
+describe('estimateTaxes — dependent standard-deduction cap', () => {
+  it('caps the deduction at earned income + $450 for a dependent', () => {
+    // $6,000 earned -> capped deduction = 6,000 + 450 = 6,450 (< $15,000).
+    const r = estimateTaxes(
+      makeInputs({ grossMonthlyIncome: 2000, monthsWorked: 3, canBeClaimedAsDependent: true }),
+    );
+    expect(r.standardDeduction).toBe(6_450);
+    expect(r.federalActuallyOwed).toBeCloseTo(federalTax(6_000 - 6_450, 'single'), 6);
+  });
+
+  it('never exceeds the regular standard deduction even for a dependent', () => {
+    // High earned income -> cap would be huge, but clamped to $15,000.
+    const r = estimateTaxes(
+      makeInputs({ grossMonthlyIncome: 8000, monthsWorked: 3, canBeClaimedAsDependent: true }),
+    );
+    expect(r.standardDeduction).toBe(15_000);
+  });
+
+  it('a dependent owes at least as much federal tax as a non-dependent', () => {
+    const dep = estimateTaxes(makeInputs({ canBeClaimedAsDependent: true }));
+    const nonDep = estimateTaxes(makeInputs({ canBeClaimedAsDependent: false }));
+    expect(dep.federalActuallyOwed).toBeGreaterThanOrEqual(nonDep.federalActuallyOwed);
+  });
+
+  it('does not change what payroll withholds (only the liability)', () => {
+    const dep = estimateTaxes(makeInputs({ canBeClaimedAsDependent: true }));
+    const nonDep = estimateTaxes(makeInputs({ canBeClaimedAsDependent: false }));
+    expect(dep.federalWithheld).toBeCloseTo(nonDep.federalWithheld, 6);
+  });
+});
+
+describe('estimateTaxes — other income & pre-tax contributions', () => {
+  it('other taxable income raises the liability and lowers the refund', () => {
+    const base = estimateTaxes(makeInputs());
+    const withOther = estimateTaxes(makeInputs({ otherTaxableIncome: 5000 }));
+    expect(withOther.federalActuallyOwed).toBeGreaterThan(base.federalActuallyOwed);
+    expect(withOther.federalRefund).toBeLessThan(base.federalRefund);
+    expect(withOther.otherTaxableIncome).toBe(5000);
+  });
+
+  it('pre-tax contributions lower the liability and raise the refund', () => {
+    const base = estimateTaxes(makeInputs());
+    const withPreTax = estimateTaxes(makeInputs({ preTaxContributions: 4000 }));
+    expect(withPreTax.federalActuallyOwed).toBeLessThan(base.federalActuallyOwed);
+    expect(withPreTax.federalRefund).toBeGreaterThan(base.federalRefund);
+    expect(withPreTax.preTaxContributions).toBe(4000);
+  });
+
+  it('flags an under-withholding (owe-at-filing) situation in the notes', () => {
+    // Large untaxed non-wage income can flip the refund negative.
+    const r = estimateTaxes(
+      makeInputs({ grossMonthlyIncome: 2000, monthsWorked: 2, otherTaxableIncome: 40_000 }),
+    );
+    expect(r.federalRefund).toBeLessThan(0);
+    expect(r.notes.some((n) => /owe/i.test(n))).toBe(true);
+  });
+
+  it('always includes an assumptions note', () => {
+    const r = estimateTaxes(makeInputs());
+    expect(r.notes.some((n) => /Assumes:/i.test(n))).toBe(true);
+  });
+});
+
 describe('estimateTaxes — take-home & bottom line', () => {
   it('monthly take-home is gross minus monthly withholding', () => {
     const r = estimateTaxes(makeInputs({ grossMonthlyIncome: 8000, monthsWorked: 3, workState: 'WA' }));

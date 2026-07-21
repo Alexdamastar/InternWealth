@@ -40,6 +40,26 @@ const STANDARD_DEDUCTION: Record<FilingStatus, number> = {
   married_jointly: 30_000,
 };
 
+// If you CAN be claimed as a dependent on someone else's return (common for
+// students / first-time interns still claimed by a parent), your standard
+// deduction is capped: it's the GREATER of $1,350 or your earned income + $450,
+// but never more than the normal standard deduction. This is the one "About
+// you" question that materially changes an intern's federal tax, so we model it.
+const DEPENDENT_MIN_DEDUCTION = 1_350;
+const DEPENDENT_EARNED_INCOME_BUMP = 450;
+
+// The standard deduction actually available, accounting for the dependent cap.
+function standardDeductionFor(
+  status: FilingStatus,
+  earnedIncome: number,
+  canBeClaimedAsDependent: boolean,
+): number {
+  const regular = STANDARD_DEDUCTION[status];
+  if (!canBeClaimedAsDependent) return regular;
+  const capped = Math.max(DEPENDENT_MIN_DEDUCTION, Math.max(0, earnedIncome) + DEPENDENT_EARNED_INCOME_BUMP);
+  return Math.min(regular, capped);
+}
+
 // 2025 federal income-tax brackets by filing status. Each entry is
 // [upperBound, rate]; the last bound is Infinity.
 type Bracket = [upper: number, rate: number];
@@ -160,6 +180,18 @@ export interface TaxInputs {
   filingStatus: FilingStatus;
   workState: string; // 2-letter code where the internship is
   homeState: string; // 2-letter code of legal residence (may equal workState)
+
+  // --- Optional refinements (default to the intern-typical value if omitted) ---
+  // Can someone else (usually a parent) claim you as a dependent? Caps the
+  // standard deduction. Default false.
+  canBeClaimedAsDependent?: boolean;
+  // Other taxable income with NO withholding — taxable scholarships, interest,
+  // dividends, etc. Added to taxable income; it can leave you UNDER-withheld.
+  // Annual total for 2025. Default 0.
+  otherTaxableIncome?: number;
+  // Pre-tax contributions made OUTSIDE payroll (traditional IRA / HSA). Reduces
+  // taxable income. Annual total for 2025. Default 0.
+  preTaxContributions?: number;
 }
 
 export interface TaxResult {
@@ -167,6 +199,9 @@ export interface TaxResult {
   taxYear: number;
   actualGrossEarned: number; // gross for the months actually worked
   annualizedGross: number; // what the payroll table assumes (gross x 12)
+  standardDeduction: number; // deduction actually applied (post dependent cap)
+  otherTaxableIncome: number; // echoed: non-wage income with no withholding
+  preTaxContributions: number; // echoed: pre-tax contributions reducing taxable income
 
   // Federal income tax.
   federalWithheld: number; // withheld across the internship (annualized rate)
@@ -207,16 +242,28 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   const grossMonthly = Math.max(0, inputs.grossMonthlyIncome);
   const months = Math.max(0, inputs.monthsWorked);
   const status = inputs.filingStatus;
-  const deduction = STANDARD_DEDUCTION[status];
+  const canBeClaimed = inputs.canBeClaimedAsDependent ?? false;
+  const otherIncome = Math.max(0, inputs.otherTaxableIncome ?? 0);
+  const preTax = Math.max(0, inputs.preTaxContributions ?? 0);
 
   const actualGross = grossMonthly * months;
   const annualizedGross = grossMonthly * 12;
 
   // --- Federal income tax (annualized withholding vs. actual liability) ---
-  const federalIfFullYear = federalTax(annualizedGross - deduction, status);
+  // Withholding basis: payroll uses a default W-4 — the FULL standard deduction,
+  // wages only, annualized. It knows nothing about dependent status, outside
+  // pre-tax contributions, or non-wage income, so those only move actual
+  // liability (and therefore the refund), never what's withheld per paycheck.
+  const withholdingDeduction = STANDARD_DEDUCTION[status];
+  const federalIfFullYear = federalTax(annualizedGross - withholdingDeduction, status);
   const monthlyFederalWithheld = federalIfFullYear / 12;
   const federalWithheld = monthlyFederalWithheld * months;
-  const federalActuallyOwed = federalTax(actualGross - deduction, status);
+
+  // Actual liability: apply the dependent-capped deduction, subtract pre-tax
+  // contributions, and add non-wage taxable income.
+  const filingDeduction = standardDeductionFor(status, actualGross, canBeClaimed);
+  const federalTaxableIncome = actualGross + otherIncome - preTax - filingDeduction;
+  const federalActuallyOwed = federalTax(federalTaxableIncome, status);
   const federalRefund = federalWithheld - federalActuallyOwed;
 
   // --- FICA: flat on actual wages, Social Security capped at the wage base ---
@@ -248,7 +295,10 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   const totalTakeHome = monthlyTakeHome * months;
 
   const totalTaxOwed = federalActuallyOwed + fica + totalStateOwed;
-  const effectiveTaxRate = actualGross > 0 ? totalTaxOwed / actualGross : 0;
+  // Effective rate is measured against total taxable income (wages + other),
+  // so adding non-wage income doesn't look like a free lunch.
+  const incomeBase = actualGross + otherIncome;
+  const effectiveTaxRate = incomeBase > 0 ? totalTaxOwed / incomeBase : 0;
   // Net cash situation at filing: federal refund, less any state still owed.
   const estimatedRefund = federalRefund - stateStillOwedAtFiling;
 
@@ -264,7 +314,40 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
         `all year, you're likely over-withheld on federal tax and should get roughly ` +
         `$${Math.round(federalRefund).toLocaleString('en-US')} back as a refund.`,
     );
+  } else if (federalRefund < 0) {
+    notes.push(
+      `Heads up: your income here withholds LESS federal tax than you'll owe — expect to owe ` +
+        `about $${Math.round(-federalRefund).toLocaleString('en-US')} at filing. This usually ` +
+        `happens when non-wage income (like a taxable scholarship) isn't withheld on, or you can ` +
+        `be claimed as a dependent. Set that money aside now.`,
+    );
   }
+  if (canBeClaimed && filingDeduction < STANDARD_DEDUCTION[status]) {
+    notes.push(
+      `Because you can be claimed as a dependent, your standard deduction is capped at ` +
+        `$${Math.round(filingDeduction).toLocaleString('en-US')} (not the full ` +
+        `$${STANDARD_DEDUCTION[status].toLocaleString('en-US')}), so more of your pay is taxed.`,
+    );
+  }
+  if (otherIncome > 0) {
+    notes.push(
+      `We added $${Math.round(otherIncome).toLocaleString('en-US')} of other taxable income ` +
+        `(e.g. a taxable scholarship or interest). Nothing is withheld on it, so it lowers your ` +
+        `refund or adds to what you owe.`,
+    );
+  }
+  if (preTax > 0) {
+    notes.push(
+      `We subtracted $${Math.round(preTax).toLocaleString('en-US')} in pre-tax contributions ` +
+        `(traditional IRA / HSA), which lowers your taxable income and your federal tax.`,
+    );
+  }
+  // Be explicit about what we assume, so nothing is silently pretended.
+  notes.push(
+    `Assumes: not 65+ or blind, no dependents of your own, no self-employment/pension/` +
+      `unemployment income, and the standard deduction (no itemizing). Adjust on the IRS ` +
+      `estimator if any of those apply to you.`,
+  );
   if (home.code && work.code && home.code !== work.code) {
     if (stateStillOwedAtFiling > 0) {
       notes.push(
@@ -293,6 +376,9 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
     taxYear: TAX_YEAR,
     actualGrossEarned: actualGross,
     annualizedGross,
+    standardDeduction: filingDeduction,
+    otherTaxableIncome: otherIncome,
+    preTaxContributions: preTax,
     federalWithheld,
     federalActuallyOwed,
     federalRefund,
