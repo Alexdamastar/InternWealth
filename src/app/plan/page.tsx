@@ -28,11 +28,13 @@ import type {
   AllocationResult,
   Goal,
   SurplusSplit,
+  Transaction,
   TxCategory,
   UserProfile,
 } from '@/lib/types';
 import AllocationChart from '@/components/AllocationChart';
 import { ComputedBadge, ExplainedBadge } from '@/components/Provenance';
+import DriftPanel from '@/components/DriftPanel';
 import GoalEditor from '@/components/GoalEditor';
 import SurplusSplitter from '@/components/SurplusSplitter';
 import TimelinePanel from '@/components/TimelinePanel';
@@ -64,6 +66,8 @@ export default function PlanPage() {
   const [spending, setSpending] = useState<Record<TxCategory, number>>(
     () => deriveSpendingByCategory([]),
   );
+  // Raw transactions, kept for the plan-vs-reality drift panel.
+  const [transactions, setTransactionsState] = useState<Transaction[]>([]);
 
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explainState, setExplainState] = useState<'idle' | 'loading' | 'done' | 'fallback'>(
@@ -87,6 +91,7 @@ export default function PlanPage() {
       if (income > 0) refined.monthlyIncome = income;
       if (essential > 0) refined.essentialMonthlyExpenses = essential;
       setSpending(deriveSpendingByCategory(txns));
+      setTransactionsState(txns);
     }
 
     // Use the post-tax take-home from the tax estimator when available.
@@ -238,6 +243,15 @@ export default function PlanPage() {
         emergencyMonths={emergencyMonths}
         surplusSplit={surplusSplit}
         onProfileChange={setProfile}
+      />
+
+      {/* Plan vs. reality: observed burn rate vs assumptions + milestone shifts */}
+      <DriftPanel
+        profile={profile}
+        goals={goals}
+        transactions={transactions}
+        emergencyMonths={emergencyMonths}
+        surplusSplit={surplusSplit}
       />
 
       {/* Post-Roth surplus decision: split cash / brokerage / 401(k) */}
