@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const LINKS = [
   { href: '/onboarding', label: 'Goals' },
   { href: '/ingest', label: 'Transactions' },
+  { href: '/tax', label: 'Tax' },
   { href: '/plan', label: 'Plan' },
   { href: '/progress', label: 'Progress' },
 ];
@@ -24,7 +25,7 @@ export default function NavBar() {
             est. your internship
           </span>
         </Link>
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
           {LINKS.map((l, i) => {
             const active = pathname === l.href;
             return (
@@ -36,7 +37,7 @@ export default function NavBar() {
                 }`}
               >
                 <span
-                  className={`font-mono text-[10px] ${active ? 'text-moss' : 'text-faint'}`}
+                  className={`font-bold text-xs ${active ? 'text-moss' : 'text-faint'}`}
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>

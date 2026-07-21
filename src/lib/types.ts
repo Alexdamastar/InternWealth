@@ -60,6 +60,33 @@ export interface UserProfile {
   paycheckAmount?: number;
 }
 
+// Inputs the intern gives the tax calculator. Persisted so the estimate (and
+// the take-home it feeds into the plan) survives navigation. `takeHomeMonthly`
+// is the calculator's output that the plan reads as post-tax income.
+export interface TaxProfile {
+  grossMonthlyIncome: number;
+  monthsWorked: number;
+  filingStatus: 'single' | 'married_jointly';
+  workState: string;
+  homeState: string;
+  // Optional refinements from the IRS-style questions worth asking an intern.
+  // Can a parent (or anyone) claim you as a dependent? Caps the standard
+  // deduction — common for students. Defaults false when absent.
+  canBeClaimedAsDependent?: boolean;
+  // Net profit from a side hustle / freelance / gig work for the year. Carries
+  // ~15.3% self-employment tax with no withholding. Defaults 0.
+  selfEmploymentProfit?: number;
+  // Annual non-wage taxable income with no withholding (taxable scholarships,
+  // interest, dividends). Defaults 0.
+  otherTaxableIncome?: number;
+  // Annual pre-tax contributions made outside payroll (traditional IRA / HSA).
+  // Defaults 0.
+  preTaxContributions?: number;
+  // The most recently computed monthly take-home, saved so /plan can use it as
+  // the allocatable-income basis without recomputing. Undefined until computed.
+  takeHomeMonthly?: number;
+}
+
 export type GoalKind =
   | 'emergency'
   | 'school'

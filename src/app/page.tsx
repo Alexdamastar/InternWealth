@@ -31,9 +31,9 @@ export default function Home() {
           A field guide to your first real paycheck
         </p>
         <h1 className="font-display font-semibold text-[clamp(2.4rem,6vw,4.2rem)] leading-[1.04] tracking-tight max-w-3xl text-balance">
-          Turn a 21-page finance guide into a{' '}
+          Get a complete financial plan in{' '}
           <em className="text-moss not-italic border-b-4 border-moss/30">
-            5-minute plan.
+            5 minutes.
           </em>
         </h1>
         <div className="mt-7 grid gap-8 lg:grid-cols-[1fr_minmax(240px,300px)] lg:gap-14 items-start">
@@ -45,12 +45,11 @@ export default function Home() {
               deterministic, personalized allocation plan
             </strong>{' '}
             — emergency fund, school-year expenses, Roth IRA, 401(k), and
-            brokerage — plus a plain-English explanation.
+            brokerage.
           </p>
           <blockquote className="border-l-2 border-moss/40 pl-4 text-sm text-faint italic leading-relaxed">
-            &ldquo;No incoming intern reads 21 pages. So we turned that guide
-            into an agent that personalizes it to your actual numbers in 5
-            minutes. That&apos;s paying it forward.&rdquo;
+            &ldquo;Learning how to invest as an intern is hard. Let our agent
+            tell you how.&rdquo;
           </blockquote>
         </div>
 
@@ -67,7 +66,7 @@ export default function Home() {
           >
             Load sample statement
           </button>
-          <span className="text-xs text-faint">zero-setup demo, no key needed</span>
+          <span className="text-xs text-faint">zero-setup demo, no AWS access needed</span>
         </div>
       </section>
 
@@ -85,14 +84,14 @@ export default function Home() {
         />
         <Principle
           n="02"
-          title="Runs locally, BYO key"
-          body="No server we own. Your statements and goals live only on your machine. The only thing that leaves is text you send to Anthropic under your own key."
+          title="Your data, your AWS account"
+          body="No server we own. Your statements and goals live only on your machine, and the AI runs on Amazon Bedrock under your own AWS credentials — Bedrock doesn't store your prompts or train on them."
           delay="0.2s"
         />
         <Principle
           n="03"
-          title="Works without an LLM"
-          body="Categorization has a keyword fallback and the plan renders from deterministic rationales, so the core demo never depends on a live API call."
+          title="AI where it helps, math where it counts"
+          body="Claude handles the chat onboarding, transaction categorization, and plain-English writeup; the allocation itself is deterministic. If Bedrock is down, local fallbacks keep every screen working."
           delay="0.3s"
         />
       </section>

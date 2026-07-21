@@ -15,6 +15,7 @@
 //     can't be changed. The intern can still edit their label and target amount.
 import type { Goal, GoalKind, WorkingPlan } from '@/lib/types';
 import Markdown from '@/components/Markdown';
+import Dropdown from '@/components/Dropdown';
 
 // Kinds offered in the (non-core) goal category dropdown.
 const KINDS: GoalKind[] = ['emergency', 'school', 'roth', '401k', 'brokerage', 'custom'];
@@ -208,43 +209,31 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
           value={p.rothContributedThisYear}
           onChange={(v) => patchProfile({ rothContributedThisYear: v })}
         />
-        <label className="flex flex-col gap-1 text-xs text-ink-2">
-          Work state
-          <select
-            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={p.workState}
-            onChange={(e) => patchProfile({ workState: e.target.value })}
-          >
-            <option value="">Select state…</option>
-            {US_STATES.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.code} — {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-ink-2">
-          401(k) match realistically vests?
-          <select
-            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={p.employer401kVests ? 'yes' : 'no'}
-            onChange={(e) => patchProfile({ employer401kVests: e.target.value === 'yes' })}
-          >
-            <option value="no">No (e.g. Amazon intern)</option>
-            <option value="yes">Yes</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-ink-2">
-          Internship ending soon?
-          <select
-            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
-            value={p.internshipEndsSoon ? 'yes' : 'no'}
-            onChange={(e) => patchProfile({ internshipEndsSoon: e.target.value === 'yes' })}
-          >
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-        </label>
+        <Dropdown
+          label="Work state"
+          value={p.workState}
+          onChange={(v) => patchProfile({ workState: v })}
+          options={US_STATES.map((s) => ({ value: s.code, label: `${s.code} — ${s.name}` }))}
+          placeholder="Select state…"
+        />
+        <Dropdown
+          label="401(k) match realistically vests?"
+          value={p.employer401kVests ? 'yes' : 'no'}
+          onChange={(v) => patchProfile({ employer401kVests: v === 'yes' })}
+          options={[
+            { value: 'no', label: 'No (e.g. Amazon intern)' },
+            { value: 'yes', label: 'Yes' },
+          ]}
+        />
+        <Dropdown
+          label="Internship ending soon?"
+          value={p.internshipEndsSoon ? 'yes' : 'no'}
+          onChange={(v) => patchProfile({ internshipEndsSoon: v === 'yes' })}
+          options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]}
+        />
       </div>
 
       {/* Goals — the four core buckets are always present and permanent; extra
@@ -277,17 +266,12 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
               value={g.label}
               onChange={(e) => updateGoal(g.id, { label: e.target.value })}
             />
-            <select
-              className="bg-card border border-line px-1.5 py-1 text-xs focus:border-moss"
+            <Dropdown
+              className="w-28 shrink-0"
               value={g.kind}
-              onChange={(e) => updateGoal(g.id, { kind: e.target.value as GoalKind })}
-            >
-              {KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => updateGoal(g.id, { kind: v as GoalKind })}
+              options={KINDS.map((k) => ({ value: k, label: k }))}
+            />
             <TargetInput
               value={g.targetAmount}
               onChange={(v) => updateGoal(g.id, { targetAmount: v })}

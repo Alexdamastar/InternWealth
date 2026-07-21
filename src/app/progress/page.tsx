@@ -39,7 +39,7 @@ export default function ProgressPage() {
     return (
       <div className="rise">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
-          Step 04 · Progress
+          Step 05 · Progress
         </p>
         <h1 className="font-display font-semibold text-3xl tracking-tight mb-3">
           Progress
@@ -67,7 +67,7 @@ export default function ProgressPage() {
     <div className="space-y-8">
       <header className="rise">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
-          Step 04 · Progress
+          Step 05 · Progress
         </p>
         <h1 className="font-display font-semibold text-3xl tracking-tight">
           Progress
