@@ -54,30 +54,39 @@ export default function TaxPage() {
     setTaxProfile(tax);
   }, [ready, tax]);
 
-  if (!ready || !tax) return <p className="text-sm text-gray-500">Loading the tax estimator…</p>;
+  if (!ready || !tax) return <p className="text-sm text-faint font-mono">Loading the tax estimator…</p>;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Tax &amp; take-home estimator</h1>
-        <p className="text-sm text-gray-600 max-w-2xl">
-          Interns are usually <strong>over-withheld</strong> — payroll assumes you earn your
-          summer wage all year, so you get a chunk back as a refund. Enter your numbers to see
-          your real monthly take-home (which feeds your plan) and your likely refund.
+    <div className="space-y-8">
+      <header className="rise">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
+          Step 03 · Tax
         </p>
-      </div>
+        <h1 className="font-display font-semibold text-3xl tracking-tight">
+          Tax &amp; take-home estimator
+        </h1>
+        <p className="text-sm text-ink-2 mt-2 max-w-2xl leading-relaxed">
+          Interns are usually <strong className="text-ink">over-withheld</strong> — payroll
+          assumes you earn your summer wage all year, so you get a chunk back as a refund. Enter
+          your numbers to see your real monthly take-home (which feeds your plan) and your likely
+          refund.
+        </p>
+      </header>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <section
+        className="bg-card border border-line shadow-card p-5 rise"
+        style={{ animationDelay: '0.1s' }}
+      >
         <TaxCalculator value={tax} onChange={setTax} />
-      </div>
+      </section>
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-faint">
           Your monthly take-home is saved and used as post-tax income on your plan.
         </p>
         <Link
           href="/plan"
-          className="shrink-0 bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700"
+          className="shrink-0 bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
         >
           Use it in my plan →
         </Link>

@@ -62,12 +62,12 @@ export default function TaxCalculator({ value, onChange }: Props) {
           value={value.grossMonthlyIncome}
           onChange={(v) => patch({ grossMonthlyIncome: v })}
         />
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
           Months you&apos;ll work
           <input
             type="text"
             inputMode="numeric"
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={String(value.monthsWorked)}
             onChange={(e) => {
               const digits = e.target.value.replace(/[^0-9]/g, '');
@@ -75,10 +75,10 @@ export default function TaxCalculator({ value, onChange }: Props) {
             }}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
           Filing status
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={value.filingStatus}
             onChange={(e) => patch({ filingStatus: e.target.value as FilingStatus })}
           >
@@ -86,10 +86,10 @@ export default function TaxCalculator({ value, onChange }: Props) {
             <option value="married_jointly">Married, filing jointly</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
           Can a parent claim you as a dependent?
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={value.canBeClaimedAsDependent ? 'yes' : 'no'}
             onChange={(e) => patch({ canBeClaimedAsDependent: e.target.value === 'yes' })}
           >
@@ -110,11 +110,11 @@ export default function TaxCalculator({ value, onChange }: Props) {
       </div>
 
       {/* Advanced (opt-in): non-wage income + pre-tax contributions */}
-      <div className="border-t border-gray-100 pt-3">
+      <div className="border-t border-line pt-3">
         <button
           type="button"
           onClick={() => setShowAdvanced((s) => !s)}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+          className="font-mono text-xs uppercase tracking-wider text-moss hover:text-moss-deep"
         >
           {showAdvanced ? '− Hide' : '+ Add'} a side hustle, other income, or pre-tax contributions
         </button>
@@ -135,7 +135,7 @@ export default function TaxCalculator({ value, onChange }: Props) {
               value={value.preTaxContributions ?? 0}
               onChange={(v) => patch({ preTaxContributions: v })}
             />
-            <p className="col-span-2 text-[11px] text-gray-400">
+            <p className="col-span-2 text-[11px] text-faint leading-relaxed">
               Side hustle profit = freelance, gig, or contractor income minus business expenses;
               it carries ~15.3% self-employment tax with nothing withheld. Other income = taxable
               scholarships, interest, or dividends. Pre-tax contributions to a traditional IRA or
@@ -172,8 +172,10 @@ export default function TaxCalculator({ value, onChange }: Props) {
 
       {/* Breakdown */}
       <div className="text-sm">
-        <p className="text-xs font-medium text-gray-500 mb-1">Breakdown (for the internship)</p>
-        <dl className="divide-y divide-gray-100 border border-gray-200 rounded-md">
+        <p className="font-mono text-xs uppercase tracking-wider text-faint mb-1.5">
+          Breakdown (for the internship)
+        </p>
+        <dl className="divide-y divide-line border border-line">
           <Row k="Gross earned (wages)" v={usd(result.actualGrossEarned)} />
           {result.selfEmploymentProfit > 0 && (
             <Row k="Side hustle profit" v={usd(result.selfEmploymentProfit)} />
@@ -215,8 +217,8 @@ export default function TaxCalculator({ value, onChange }: Props) {
       {result.notes.length > 0 && (
         <ul className="space-y-1.5">
           {result.notes.map((n, i) => (
-            <li key={i} className="flex gap-2 text-xs text-gray-600">
-              <span aria-hidden className="text-gray-400">
+            <li key={i} className="flex gap-2 text-xs text-ink-2 leading-relaxed">
+              <span aria-hidden className="text-moss">
                 •
               </span>
               <span>{n}</span>
@@ -225,10 +227,10 @@ export default function TaxCalculator({ value, onChange }: Props) {
         </ul>
       )}
 
-      <p className="text-[11px] text-gray-400">
+      <p className="text-[11px] text-faint">
         This mirrors the{' '}
         <a
-          className="underline"
+          className="text-moss underline hover:text-moss-deep"
           href="https://www.irs.gov/individuals/tax-withholding-estimator"
           target="_blank"
           rel="noreferrer"
@@ -251,10 +253,10 @@ function StateSelect({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-gray-600">
+    <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
       {label}
       <select
-        className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+        className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -281,12 +283,12 @@ function Money({
   onChange: (v: number) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-gray-600">
+    <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider text-faint">
       {label}
       <input
         type="text"
         inputMode="numeric"
-        className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+        className="bg-paper/60 border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
         value={Number.isFinite(value) ? String(value) : '0'}
         onChange={(e) => {
           const digits = e.target.value.replace(/[^0-9]/g, '');
@@ -310,15 +312,19 @@ function Stat({
 }) {
   return (
     <div
-      className={`rounded-lg border p-3 ${
-        accent ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200 bg-white'
+      className={`border p-3 ${
+        accent ? 'border-moss/30 bg-moss/5' : 'border-line bg-card'
       }`}
     >
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`text-lg font-semibold ${accent ? 'text-indigo-700' : 'text-gray-900'}`}>
+      <p className="font-mono text-xs uppercase tracking-wider text-faint">{label}</p>
+      <p
+        className={`font-display text-lg font-semibold ${
+          accent ? 'text-moss' : 'text-ink'
+        }`}
+      >
         {value}
       </p>
-      {hint && <p className="text-[11px] text-gray-400 mt-0.5">{hint}</p>}
+      {hint && <p className="text-[11px] text-faint mt-0.5">{hint}</p>}
     </div>
   );
 }
@@ -327,10 +333,10 @@ function Row({ k, v, sub }: { k: string; v: string; sub?: string }) {
   return (
     <div className="flex items-center justify-between px-3 py-2">
       <div>
-        <dt className="text-gray-700">{k}</dt>
-        {sub && <p className="text-[11px] text-amber-700">{sub}</p>}
+        <dt className="text-ink-2">{k}</dt>
+        {sub && <p className="text-[11px] text-warn-text">{sub}</p>}
       </div>
-      <dd className="font-medium text-gray-900 tabular-nums">{v}</dd>
+      <dd className="font-medium text-ink tabular-nums">{v}</dd>
     </div>
   );
 }
