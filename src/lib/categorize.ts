@@ -126,7 +126,7 @@ export function categorizeLocal(txns: Transaction[]): Transaction[] {
 }
 
 /** Number of distinct YYYY-MM periods present (min 1). */
-function distinctMonths(txns: Transaction[]): number {
+export function distinctMonths(txns: Transaction[]): number {
   const months = new Set<string>();
   for (const t of txns) {
     const m = (t.date ?? '').slice(0, 7); // YYYY-MM

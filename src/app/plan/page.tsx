@@ -28,10 +28,13 @@ import type {
   AllocationResult,
   Goal,
   SurplusSplit,
+  Transaction,
   TxCategory,
   UserProfile,
 } from '@/lib/types';
 import AllocationChart from '@/components/AllocationChart';
+import { ComputedBadge, ExplainedBadge } from '@/components/Provenance';
+import DriftPanel from '@/components/DriftPanel';
 import GoalEditor from '@/components/GoalEditor';
 import SurplusSplitter from '@/components/SurplusSplitter';
 import TimelinePanel from '@/components/TimelinePanel';
@@ -63,6 +66,8 @@ export default function PlanPage() {
   const [spending, setSpending] = useState<Record<TxCategory, number>>(
     () => deriveSpendingByCategory([]),
   );
+  // Raw transactions, kept for the plan-vs-reality drift panel.
+  const [transactions, setTransactionsState] = useState<Transaction[]>([]);
 
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explainState, setExplainState] = useState<'idle' | 'loading' | 'done' | 'fallback'>(
@@ -86,6 +91,7 @@ export default function PlanPage() {
       if (income > 0) refined.monthlyIncome = income;
       if (essential > 0) refined.essentialMonthlyExpenses = essential;
       setSpending(deriveSpendingByCategory(txns));
+      setTransactionsState(txns);
     }
 
     // Use the post-tax take-home from the tax estimator when available.
@@ -212,6 +218,22 @@ export default function PlanPage() {
 
       <div className="rise" style={{ animationDelay: '0.16s' }}>
         <AllocationChart result={result} />
+        {/* Surfaced invariant (4.3): the engine's tested guarantee, displayed.
+            Computed live from the same result object the chart renders. */}
+        <div className="border border-t-0 border-line bg-card px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <span className="font-mono text-xs text-ink-2">
+            ✓ every dollar accounted for:{' '}
+            <span className="text-ink font-semibold">{usd(result.totalAllocatable)}</span> in ={' '}
+            <span className="text-ink font-semibold">
+              {usd(result.steps.reduce((a, s) => a + s.amount, 0) + result.leftover)}
+            </span>{' '}
+            out
+            {result.leftover > 0 && (
+              <span className="text-faint"> (incl. {usd(result.leftover)} unallocated)</span>
+            )}
+          </span>
+          <ComputedBadge />
+        </div>
       </div>
 
       {/* Feature 1.1: paycheck-by-paycheck timeline of the same waterfall. */}
@@ -221,6 +243,15 @@ export default function PlanPage() {
         emergencyMonths={emergencyMonths}
         surplusSplit={surplusSplit}
         onProfileChange={setProfile}
+      />
+
+      {/* Plan vs. reality: observed burn rate vs assumptions + milestone shifts */}
+      <DriftPanel
+        profile={profile}
+        goals={goals}
+        transactions={transactions}
+        emergencyMonths={emergencyMonths}
+        surplusSplit={surplusSplit}
       />
 
       {/* Post-Roth surplus decision: split cash / brokerage / 401(k) */}
@@ -234,9 +265,12 @@ export default function PlanPage() {
 
       {/* Step-by-step rationales — render with zero LLM calls */}
       <div className="bg-card border border-line shadow-card p-5">
-        <h3 className="font-display font-semibold text-lg mb-4">
-          Step-by-step reasoning
-        </h3>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="font-display font-semibold text-lg">
+            Step-by-step reasoning
+          </h3>
+          <ComputedBadge />
+        </div>
         <ol className="space-y-4">
           {result.steps.map((step, i) => (
             <li key={step.bucket} className="flex gap-4">
@@ -262,6 +296,21 @@ export default function PlanPage() {
                 <p className="text-sm text-ink-2 mt-1 leading-relaxed">
                   {step.rationale}
                 </p>
+                {/* Show the math (4.1): the engine's exact arithmetic with the
+                    actual inputs, expandable per step. */}
+                <details className="mt-2 group">
+                  <summary className="cursor-pointer font-mono text-xs text-moss hover:text-moss-deep select-none list-none">
+                    <span className="group-open:hidden">show the math ▸</span>
+                    <span className="hidden group-open:inline">hide the math ▾</span>
+                  </summary>
+                  <div className="mt-2 border-l-2 border-moss/30 bg-paper/60 px-3 py-2 space-y-1">
+                    {step.math.map((line, j) => (
+                      <p key={j} className="font-mono text-xs text-ink-2 leading-relaxed">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </details>
               </div>
             </li>
           ))}
@@ -281,9 +330,13 @@ export default function PlanPage() {
       {/* LLM narrative with graceful fallback */}
       <div className="bg-card border border-line shadow-card p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h3 className="font-display font-semibold text-lg">
-            Plain-English explanation
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <h3 className="font-display font-semibold text-lg">
+              Plain-English explanation
+            </h3>
+            {explainState === 'done' && <ExplainedBadge />}
+            {explainState === 'fallback' && <ComputedBadge />}
+          </div>
           <button
             onClick={generateExplanation}
             disabled={explainState === 'loading'}

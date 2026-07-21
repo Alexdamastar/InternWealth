@@ -210,12 +210,37 @@ export function allocate(
     );
   }
 
+  // "Show the math" (4.1): the exact arithmetic behind each amount, actual
+  // inputs substituted, one line per formula in evaluation order. These are
+  // the engine's real intermediates — if the code changes, these change.
+  const surplusWeightSum = SURPLUS_CHOICES.reduce(
+    (a, c) => a + Math.max(0, surplusSplit[c] ?? 0),
+    0,
+  );
+  const splitMath = (choice: SurplusChoice): string[] => [
+    `surplus = ${usd(totalAllocatable)} in − ${usd(emergencyAmount)} emergency − ${usd(schoolAmount)} school − ${usd(rothAmount)} Roth = ${usd(surplus)}`,
+    surplusWeightSum > 0
+      ? `${choice} share = ${usd(surplus)} × ${normalized[choice]}% (your split) = ${usd(amounts[choice])}${
+          surplus > 0 ? ' (largest-remainder rounding keeps the dollars exact)' : ''
+        }`
+      : `all weights are 0 → entire surplus defaults to brokerage`,
+  ];
+
   const steps: AllocationStep[] = [
     {
       bucket: 'emergency',
       label: 'Emergency fund (HYSA)',
       amount: emergencyAmount,
       capReached: emergencyNeed > 0 && emergencyAmount >= emergencyNeed,
+      math: [
+        `target = ${emergencyMonths} months × ${usd(emergencyMonthlyBasis)} (${
+          profile.schoolYearMonthlyExpenses && profile.schoolYearMonthlyExpenses > 0
+            ? 'school-year'
+            : 'monthly'
+        } expenses) = ${usd(emergencyTarget)}`,
+        `still needed = ${usd(emergencyTarget)} target − ${usd(profile.hasEmergencyFund)} already saved = ${usd(emergencyNeed)}`,
+        `allocated = min(${usd(emergencyNeed)} needed, ${usd(totalAllocatable)} available) = ${usd(emergencyAmount)}`,
+      ],
       rationale:
         `Build a ${emergencyMonths}-month emergency fund first. The 3-6 month ` +
         `emergency-fund rule protects you from surprise expenses and job gaps; ` +
@@ -235,6 +260,12 @@ export function allocate(
       label: 'School-year expenses',
       amount: schoolAmount,
       capReached: schoolTarget > 0 && schoolAmount >= schoolTarget,
+      math: [
+        `remaining after emergency = ${usd(totalAllocatable)} − ${usd(emergencyAmount)} = ${usd(totalAllocatable - emergencyAmount)}`,
+        schoolTarget > 0
+          ? `allocated = min(${usd(schoolTarget)} goal, ${usd(totalAllocatable - emergencyAmount)} remaining) = ${usd(schoolAmount)}`
+          : `no school-year goal set → ${usd(0)}`,
+      ],
       rationale:
         schoolGoal && schoolTarget > 0
           ? `Set aside ${usd(schoolTarget)} to cover tuition gaps, rent, and tech ` +
@@ -249,6 +280,11 @@ export function allocate(
       label: 'Roth IRA',
       amount: rothAmount,
       capReached: rothRoom > 0 && rothAmount >= rothRoom,
+      math: [
+        `room left = ${usd(ROTH_IRA_ANNUAL_LIMIT_2026)} annual limit − ${usd(profile.rothContributedThisYear)} already contributed = ${usd(rothRoom)}`,
+        `remaining after school = ${usd(totalAllocatable)} − ${usd(emergencyAmount)} − ${usd(schoolAmount)} = ${usd(totalAllocatable - emergencyAmount - schoolAmount)}`,
+        `allocated = min(${usd(rothRoom)} room, ${usd(totalAllocatable - emergencyAmount - schoolAmount)} remaining) = ${usd(rothAmount)}`,
+      ],
       rationale:
         `Contribute up to the Roth IRA annual limit (${usd(ROTH_IRA_ANNUAL_LIMIT_2026)}), ` +
         `with ${usd(rothRoom)} of room left this year. Intern years are among the ` +
@@ -261,6 +297,7 @@ export function allocate(
       bucket: '401k',
       label: 'Roth 401(k) (extra Roth space)',
       amount: amounts['401k'],
+      math: splitMath('401k'),
       rationale:
         amounts['401k'] > 0
           ? `You routed ${usd(amounts['401k'])} of your ${usd(surplus)} surplus into a ` +
@@ -275,6 +312,7 @@ export function allocate(
       bucket: 'brokerage',
       label: 'Taxable brokerage',
       amount: amounts.brokerage,
+      math: splitMath('brokerage'),
       rationale:
         amounts.brokerage > 0
           ? `You routed ${usd(amounts.brokerage)} of your ${usd(surplus)} surplus into a ` +
@@ -286,6 +324,7 @@ export function allocate(
       bucket: 'cash',
       label: 'Keep as cash',
       amount: amounts.cash,
+      math: splitMath('cash'),
       rationale:
         amounts.cash > 0
           ? `You kept ${usd(amounts.cash)} of your ${usd(surplus)} surplus as cash for ` +
