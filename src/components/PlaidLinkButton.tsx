@@ -14,6 +14,14 @@ interface Props {
   onTransactions: (txns: Transaction[], label: string) => void;
   onStatus: (message: string) => void;
   disabled?: boolean;
+  // Render the large, primary-CTA variant (bank-first ingest layout).
+  hero?: boolean;
+  // Open the Link flow as soon as it's ready (landing-page deep link).
+  autoOpen?: boolean;
+  // Reports availability + linked state so the page can reorder its layout
+  // (bank-first when Plaid is configured, CSV-first when it isn't). Pass a
+  // stable (useCallback) function.
+  onStateChange?: (state: { available: boolean; linked: boolean }) => void;
 }
 
 type TxResponse = {
@@ -27,7 +35,14 @@ type TxResponse = {
 const POLL_MS = 3000;
 const MAX_POLLS = 40; // ~2 minutes
 
-export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: Props) {
+export default function PlaidLinkButton({
+  onTransactions,
+  onStatus,
+  disabled,
+  hero,
+  autoOpen,
+  onStateChange,
+}: Props) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [linked, setLinked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -45,19 +60,24 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
         if (cancelled.current) return;
         if (!data.linkToken) {
           setAvailable(false);
+          onStateChange?.({ available: false, linked: false });
           return;
         }
         setLinkToken(data.linkToken);
         setLinked(Boolean(data.alreadyLinked));
         setAvailable(true);
+        onStateChange?.({ available: true, linked: Boolean(data.alreadyLinked) });
       } catch {
-        if (!cancelled.current) setAvailable(false);
+        if (!cancelled.current) {
+          setAvailable(false);
+          onStateChange?.({ available: false, linked: false });
+        }
       }
     })();
     return () => {
       cancelled.current = true;
     };
-  }, []);
+  }, [onStateChange]);
 
   const fetchTransactions = useCallback(async () => {
     setBusy(true);
@@ -68,6 +88,7 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
         const data = (await res.json()) as TxResponse;
         if (!data.linked) {
           setLinked(false);
+          onStateChange?.({ available: true, linked: false });
           onStatus(
             data.reason === 'relink_required'
               ? 'Your bank link expired — connect again to refresh.'
@@ -90,7 +111,7 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
     }
     onStatus('Bank history is taking a while. Try “Refresh from bank” again in a minute.');
     setBusy(false);
-  }, [onTransactions, onStatus]);
+  }, [onTransactions, onStatus, onStateChange]);
 
   const { open, ready } = usePlaidLink({
     token: linkToken,
@@ -115,6 +136,7 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
         return;
       }
       setLinked(true);
+      onStateChange?.({ available: true, linked: true });
       onStatus('Linked! Pulling transactions…');
       await fetchTransactions();
     },
@@ -126,6 +148,7 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
     try {
       await fetch('/api/plaid/exchange', { method: 'DELETE' });
       setLinked(false);
+      onStateChange?.({ available: true, linked: false });
       onStatus('Bank account unlinked.');
     } catch {
       onStatus('Could not unlink. Try again.');
@@ -133,19 +156,27 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
     setBusy(false);
   }
 
+  // Landing-page deep link (?connect=1): open Link the moment it's ready.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (autoOpen && ready && !linked && !autoOpened.current) {
+      autoOpened.current = true;
+      open();
+    }
+  }, [autoOpen, ready, linked, open]);
+
   if (!available) return null;
 
   const blocked = disabled || busy;
+  const primaryClasses = hero
+    ? 'bg-moss text-paper px-7 py-3 text-base font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card disabled:opacity-50'
+    : 'bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-50';
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       {linked ? (
         <>
-          <button
-            onClick={fetchTransactions}
-            disabled={blocked}
-            className="bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-50"
-          >
+          <button onClick={fetchTransactions} disabled={blocked} className={primaryClasses}>
             Refresh from bank
           </button>
           <button
@@ -157,12 +188,8 @@ export default function PlaidLinkButton({ onTransactions, onStatus, disabled }: 
           </button>
         </>
       ) : (
-        <button
-          onClick={() => open()}
-          disabled={blocked || !ready}
-          className="bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-50"
-        >
-          Connect your bank
+        <button onClick={() => open()} disabled={blocked || !ready} className={primaryClasses}>
+          Connect your bank →
         </button>
       )}
       <span className="text-xs text-faint max-w-xs leading-snug">

@@ -39,8 +39,8 @@ export default function Home() {
         <div className="mt-7 grid gap-8 lg:grid-cols-[1fr_minmax(240px,300px)] lg:gap-14 items-start">
           <p className="text-ink-2 leading-relaxed text-lg max-w-2xl">
             InternWealth is a locally-run, open-source financial agent for
-            incoming SWE interns. Answer a few questions, upload your bank
-            transactions, and get a{' '}
+            incoming SWE interns. Connect your bank (or upload a statement),
+            answer a few questions, and get a{' '}
             <strong className="text-ink">
               deterministic, personalized allocation plan
             </strong>{' '}
@@ -53,20 +53,31 @@ export default function Home() {
           </blockquote>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 mt-9">
-          <Link
-            href="/ingest"
-            className="bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
-          >
-            Get started →
-          </Link>
-          <button
-            onClick={loadSample}
-            className="px-7 py-3 text-sm font-semibold text-ink border border-ink/25 hover:border-ink hover:bg-card transition-colors"
-          >
-            Load sample statement
-          </button>
-          <span className="text-xs text-faint">zero-setup demo, no AWS access needed</span>
+        <div className="mt-9">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/ingest?connect=1"
+              className="bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
+            >
+              Connect your bank →
+            </Link>
+            <Link
+              href="/ingest"
+              className="px-7 py-3 text-sm font-semibold text-ink border border-ink/25 hover:border-ink hover:bg-card transition-colors"
+            >
+              Use a statement
+            </Link>
+            <button
+              onClick={loadSample}
+              className="text-sm font-semibold text-ink-2 hover:text-ink underline underline-offset-4 decoration-ink/30 hover:decoration-ink transition-colors"
+            >
+              or load the sample
+            </button>
+          </div>
+          <p className="text-xs text-faint mt-3">
+            Bank linking via Plaid pulls your last 6 months, already categorized —
+            the token never leaves your browser. The sample is a zero-setup demo.
+          </p>
         </div>
       </section>
 
