@@ -135,6 +135,10 @@ export interface AllocationStep {
   label: string;
   amount: number; // dollars allocated this run
   rationale: string; // deterministic string from engine
+  // "Show the math" (feature 4.1): the exact arithmetic behind `amount`, one
+  // formula per line with the ACTUAL inputs substituted in, in evaluation
+  // order. Produced by the engine, rendered verbatim — never LLM text.
+  math: string[];
   capReached?: boolean;
 }
 

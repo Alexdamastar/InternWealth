@@ -292,3 +292,55 @@ describe('allocate', () => {
     }
   });
 });
+
+describe('show-the-math (step.math)', () => {
+  it('every step carries at least one math line', () => {
+    const result = allocate(makeProfile(), [schoolGoal(1200)], 20000);
+    for (const step of result.steps) {
+      expect(step.math.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('emergency math shows the real target, saved offset, and min()', () => {
+    // 3 × $1,400 school-year − $1,000 saved = $3,200 (the FEATURES.md example)
+    const profile = makeProfile({
+      schoolYearMonthlyExpenses: 1400,
+      hasEmergencyFund: 1000,
+    });
+    const [emergency] = allocate(profile, [], 20000).steps;
+    expect(emergency.math[0]).toBe(
+      'target = 3 months × $1,400 (school-year expenses) = $4,200',
+    );
+    expect(emergency.math[1]).toBe(
+      'still needed = $4,200 target − $1,000 already saved = $3,200',
+    );
+    expect(emergency.math[2]).toBe(
+      'allocated = min($3,200 needed, $20,000 available) = $3,200',
+    );
+  });
+
+  it('roth math substitutes the annual limit and prior contributions', () => {
+    const profile = makeProfile({ rothContributedThisYear: 2000 });
+    const result = allocate(profile, [], 20000);
+    const roth = result.steps.find((s) => s.bucket === 'roth')!;
+    expect(roth.math[0]).toBe(
+      'room left = $7,500 annual limit − $2,000 already contributed = $5,500',
+    );
+  });
+
+  it('surplus math shows the waterfall subtraction and the split percentage', () => {
+    const result = allocate(makeProfile(), [], 20000, 3, split(0, 100, 0));
+    const brokerage = result.steps.find((s) => s.bucket === 'brokerage')!;
+    expect(brokerage.math[0]).toContain('surplus =');
+    expect(brokerage.math[1]).toContain('× 100% (your split)');
+  });
+
+  it('math amounts agree with the step amounts (no drift between prose and numbers)', () => {
+    const result = allocate(makeProfile(), [schoolGoal(1200)], 12345, 3, split(1, 2, 3));
+    for (const step of result.steps) {
+      const last = step.math[step.math.length - 1];
+      const usd = `$${Math.round(step.amount).toLocaleString('en-US')}`;
+      expect(last).toContain(usd);
+    }
+  });
+});
