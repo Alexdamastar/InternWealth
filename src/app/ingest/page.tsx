@@ -211,12 +211,15 @@ export default function IngestPage() {
             </div>
           </section>
 
-          <section>
+          <section className="flex items-center gap-4">
             <Link
-              href="/plan"
+              href="/tax"
               className="inline-block bg-indigo-600 text-white rounded-md px-5 py-2.5 text-sm font-medium hover:bg-indigo-700"
             >
-              Continue to Plan →
+              Next: estimate your taxes →
+            </Link>
+            <Link href="/plan" className="text-sm text-gray-500 hover:text-gray-700 underline">
+              Skip to plan
             </Link>
           </section>
         </>

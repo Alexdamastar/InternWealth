@@ -11,18 +11,24 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import TaxCalculator from '@/components/TaxCalculator';
-import { getTaxProfile, setTaxProfile, getProfile } from '@/lib/storage';
+import { getTaxProfile, setTaxProfile, getProfile, getTransactions } from '@/lib/storage';
+import { deriveMonthlyIncome } from '@/lib/categorize';
 import type { TaxProfile } from '@/lib/types';
 
 // Seed the calculator from any existing tax profile, else fall back to the
-// onboarding profile (its monthly income + work state) so the intern doesn't
-// re-enter everything.
+// onboarding profile + ingested transactions (monthly income + work state) so
+// the intern doesn't re-enter what earlier steps already know.
 function initialTaxProfile(): TaxProfile {
   const saved = getTaxProfile();
   if (saved) return saved;
   const p = getProfile();
+  // Prefer income derived from ingested transactions (matches what /plan uses),
+  // falling back to the stated onboarding income, then a sensible default.
+  const txns = getTransactions();
+  const derived = txns.length ? deriveMonthlyIncome(txns) : 0;
+  const grossMonthlyIncome = derived > 0 ? derived : p?.monthlyIncome && p.monthlyIncome > 0 ? p.monthlyIncome : 8000;
   return {
-    grossMonthlyIncome: p?.monthlyIncome ?? 8000,
+    grossMonthlyIncome: Math.round(grossMonthlyIncome),
     monthsWorked: 3,
     filingStatus: 'single',
     workState: p?.workState ?? '',
