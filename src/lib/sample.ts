@@ -11,6 +11,12 @@ export const SAMPLE_PROFILE: UserProfile = {
   rothContributedThisYear: 0,
   workState: 'WA',
   internshipEndsSoon: true,
+  // Paycheck timeline (feature 1.1): a typical 12-week summer, paid biweekly.
+  // ~$9k/mo gross ≈ $3.2k take-home per biweekly check.
+  startDate: '2026-06-01',
+  endDate: '2026-08-21',
+  payFrequency: 'biweekly',
+  paycheckAmount: 3200,
 };
 
 export const SAMPLE_GOALS: Goal[] = [

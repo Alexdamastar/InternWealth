@@ -34,6 +34,9 @@ export interface Transaction {
   category?: TxCategory; // filled by LLM or keyword fallback
 }
 
+// How often a paycheck lands. 'semimonthly' = the 1st and 15th of each month.
+export type PayFrequency = 'weekly' | 'biweekly' | 'semimonthly' | 'monthly';
+
 export interface UserProfile {
   monthlyIncome: number; // derived or stated
   essentialMonthlyExpenses: number; // during the internship (often HCOL summer)
@@ -48,6 +51,13 @@ export interface UserProfile {
   rothContributedThisYear: number;
   workState: string; // e.g. "WA", "CA", "NY"
   internshipEndsSoon: boolean;
+  // --- Paycheck timeline (feature 1.1) — all optional; the timeline simulator
+  // only runs when startDate/endDate/paycheckAmount are present. Dates are ISO
+  // (YYYY-MM-DD). paycheckAmount is per-paycheck take-home in dollars.
+  startDate?: string;
+  endDate?: string;
+  payFrequency?: PayFrequency;
+  paycheckAmount?: number;
 }
 
 // Inputs the intern gives the tax calculator. Persisted so the estimate (and

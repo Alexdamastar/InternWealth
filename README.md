@@ -75,6 +75,24 @@ export BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-5   # optional model/prof
 No Bedrock access? Just click **"Load sample statement"** on the home page for a zero-setup
 demo — the plan, categorization, and rationale all fall back to fully local logic.
 
+### Optional: connect your bank with Plaid
+
+Instead of exporting a CSV you can link a bank account directly. Create a
+[Plaid](https://dashboard.plaid.com/) account (the free **sandbox** tier works — use
+credentials `user_good` / `pass_good` in the Link flow) and put your keys in `.env.local`
+(gitignored):
+
+```bash
+PLAID_CLIENT_ID=your_client_id
+PLAID_SECRET=your_sandbox_secret
+PLAID_ENV=sandbox        # or 'production'
+```
+
+Without these vars the "Connect your bank" button simply doesn't render and the CSV path
+works as before. Privacy holds: the Plaid access token lives only in an httpOnly cookie in
+*your* browser — there is still no server database — and transactions are categorized by a
+deterministic mapping of Plaid's categories (no LLM in that path).
+
 ### Tests & build
 
 ```bash
@@ -84,8 +102,9 @@ npm run build   # production build
 
 ## Tech
 
-Next.js (App Router) · TypeScript · Tailwind CSS · Recharts · papaparse · zod ·
-Anthropic Claude (`claude-sonnet-5`) on Amazon Bedrock via the machine's own AWS credentials.
+Next.js (App Router) · TypeScript · Tailwind CSS · Recharts · papaparse · zod · Plaid
+(optional bank linking) · Anthropic Claude (`claude-sonnet-5`) on Amazon Bedrock via the
+machine's own AWS credentials.
 No vector DB, no RAG — the guide fits in context and is loaded whole as the system prompt.
 
 ## Knowledge base & attribution

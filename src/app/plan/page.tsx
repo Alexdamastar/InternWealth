@@ -34,6 +34,7 @@ import type {
 import AllocationChart from '@/components/AllocationChart';
 import GoalEditor from '@/components/GoalEditor';
 import SurplusSplitter from '@/components/SurplusSplitter';
+import TimelinePanel from '@/components/TimelinePanel';
 import Markdown from '@/components/Markdown';
 
 const usd = (n: number) =>
@@ -212,6 +213,15 @@ export default function PlanPage() {
       <div className="rise" style={{ animationDelay: '0.16s' }}>
         <AllocationChart result={result} />
       </div>
+
+      {/* Feature 1.1: paycheck-by-paycheck timeline of the same waterfall. */}
+      <TimelinePanel
+        profile={profile}
+        goals={goals}
+        emergencyMonths={emergencyMonths}
+        surplusSplit={surplusSplit}
+        onProfileChange={setProfile}
+      />
 
       {/* Post-Roth surplus decision: split cash / brokerage / 401(k) */}
       <SurplusSplitter
