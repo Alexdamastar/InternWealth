@@ -1,10 +1,12 @@
 'use client';
 
-// /ingest — upload / paste / load-sample bank transactions, categorize them
-// (LLM if a key exists, else deterministic local fallback), preview, chart,
-// and persist for the plan page. See TECHNICAL_PLAN.md §6.
+// /ingest — connect a bank via Plaid, or upload / paste / load-sample bank
+// transactions. CSV rows are categorized by LLM if a key exists (else the
+// deterministic local fallback); Plaid rows arrive already categorized by a
+// deterministic mapping table. Preview, chart, persist for the plan page.
+// See TECHNICAL_PLAN.md §6.
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { parseCsv } from '@/lib/csv';
 import {
@@ -14,6 +16,7 @@ import {
 } from '@/lib/categorize';
 import { setTransactions } from '@/lib/storage';
 import SpendingChart from '@/components/SpendingChart';
+import PlaidLinkButton from '@/components/PlaidLinkButton';
 import type { Transaction, TxCategory } from '@/lib/types';
 
 const CATEGORY_LABELS: Record<TxCategory, string> = {
@@ -111,6 +114,14 @@ export default function IngestPage() {
     }
   }
 
+  // Plaid transactions arrive already categorized (deterministic PFC mapping
+  // server-side), so they skip the categorize step entirely.
+  const onPlaidTransactions = useCallback((incoming: Transaction[], label: string) => {
+    setTxns(incoming);
+    setTransactions(incoming);
+    setStatus(`Loaded ${incoming.length} transactions from ${label}.`);
+  }, []);
+
   return (
     <div className="space-y-8">
       <header className="rise">
@@ -121,10 +132,10 @@ export default function IngestPage() {
           Where your money went
         </h1>
         <p className="text-sm text-ink-2 mt-2 max-w-2xl leading-relaxed">
-          Upload a CSV bank statement, paste rows, or load the sample. We
-          categorize each transaction (via Claude on Bedrock if your AWS access
-          is available, otherwise a built-in keyword categorizer) and summarize
-          your spending.
+          Connect your bank, upload a CSV statement, paste rows, or load the
+          sample. We categorize each transaction (via Claude on Bedrock if your
+          AWS access is available, otherwise a built-in keyword categorizer)
+          and summarize your spending.
         </p>
       </header>
 
@@ -132,6 +143,12 @@ export default function IngestPage() {
         className="bg-card border border-line shadow-card p-5 space-y-5 rise"
         style={{ animationDelay: '0.1s' }}
       >
+        <PlaidLinkButton
+          onTransactions={onPlaidTransactions}
+          onStatus={setStatus}
+          disabled={busy}
+        />
+
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm font-medium">
             <span className="mr-2 font-mono text-xs uppercase tracking-wider text-faint">
