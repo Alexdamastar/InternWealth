@@ -44,10 +44,21 @@ export default function ChatPanel({
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Grow the textarea to fit its content (up to a cap), so long answers wrap and
+  // stay fully visible instead of scrolling horizontally in a one-line field.
+  function autosize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }
+  useEffect(() => {
+    if (inputRef.current) autosize(inputRef.current);
+  }, [input]);
 
   async function send() {
     const text = input.trim();
@@ -75,7 +86,8 @@ export default function ChatPanel({
       if (!data.reply) {
         setNotice(
           'The assistant is unavailable right now (check your AWS credentials / Bedrock access). ' +
-            'You can use the "Skip & use sample profile" button below, or try again.',
+            'You can use the "Skip & use sample profile" button below, or try again.' +
+            (data.error ? `\n\nDetails: ${data.error}` : ''),
         );
         return;
       }
@@ -144,24 +156,31 @@ export default function ChatPanel({
       </div>
 
       {notice && (
-        <div className="mx-5 mb-3 bg-warn-bg border-l-2 border-warn-text p-3 text-sm text-warn-text">
+        <div className="mx-5 mb-3 bg-warn-bg border-l-2 border-warn-text p-3 text-sm text-warn-text whitespace-pre-line">
           {notice}
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-t border-line p-4">
-        <input
-          className="flex-1 bg-paper/60 border border-line px-3 py-2 text-sm placeholder:text-faint focus:border-moss"
-          placeholder="Type your answer…"
+      <div className="flex items-end gap-2 border-t border-line p-4">
+        <textarea
+          ref={inputRef}
+          rows={1}
+          className="flex-1 resize-none bg-paper/60 border border-line px-3 py-2 text-sm leading-relaxed placeholder:text-faint focus:border-moss max-h-40 overflow-y-auto"
+          placeholder="Type your answer…  (Enter to send, Shift+Enter for a new line)"
           value={input}
           disabled={loading}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
         />
         <button
           onClick={send}
           disabled={loading || input.trim() === ''}
-          className="bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-40"
+          className="shrink-0 bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-40"
         >
           Send
         </button>

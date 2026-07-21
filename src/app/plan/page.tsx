@@ -17,6 +17,7 @@ import {
   getGoals,
   getProfile,
   getTransactions,
+  getTaxProfile,
   setGoals as persistGoals,
   setProfile as persistProfile,
   makeSnapshot,
@@ -33,15 +34,20 @@ import type {
 import AllocationChart from '@/components/AllocationChart';
 import GoalEditor from '@/components/GoalEditor';
 import SurplusSplitter from '@/components/SurplusSplitter';
+import TimelinePanel from '@/components/TimelinePanel';
 import Markdown from '@/components/Markdown';
 
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 // Allocatable cash = monthly income − essential monthly expenses (one month's
-// surplus). A reasonable default; the user can override in the editor.
-function defaultAllocatable(profile: UserProfile): number {
-  return Math.max(0, Math.round(profile.monthlyIncome - profile.essentialMonthlyExpenses));
+// surplus). A reasonable default; the user can override in the editor. When a
+// post-tax take-home is provided (from the tax estimator) it is used in place
+// of gross monthly income, so the plan allocates real, after-tax dollars.
+function defaultAllocatable(profile: UserProfile, takeHomeMonthly?: number): number {
+  const income =
+    takeHomeMonthly && takeHomeMonthly > 0 ? takeHomeMonthly : profile.monthlyIncome;
+  return Math.max(0, Math.round(income - profile.essentialMonthlyExpenses));
 }
 
 export default function PlanPage() {
@@ -49,6 +55,9 @@ export default function PlanPage() {
   const [profile, setProfile] = useState<UserProfile>(SAMPLE_PROFILE);
   const [goals, setGoals] = useState<Goal[]>(SAMPLE_GOALS);
   const [allocatable, setAllocatable] = useState<number>(0);
+  // Post-tax monthly take-home from the tax estimator, if computed. Drives the
+  // allocatable default in place of gross income.
+  const [takeHomeMonthly, setTakeHomeMonthly] = useState<number | undefined>(undefined);
   const [emergencyMonths, setEmergencyMonths] = useState<number>(DEFAULT_EMERGENCY_MONTHS);
   const [surplusSplit, setSurplusSplit] = useState<SurplusSplit>(DEFAULT_SURPLUS_SPLIT);
   const [spending, setSpending] = useState<Record<TxCategory, number>>(
@@ -79,9 +88,13 @@ export default function PlanPage() {
       setSpending(deriveSpendingByCategory(txns));
     }
 
+    // Use the post-tax take-home from the tax estimator when available.
+    const takeHome = getTaxProfile()?.takeHomeMonthly;
+
     setProfile(refined);
     setGoals(g.length ? g : SAMPLE_GOALS);
-    setAllocatable(defaultAllocatable(refined));
+    setTakeHomeMonthly(takeHome && takeHome > 0 ? takeHome : undefined);
+    setAllocatable(defaultAllocatable(refined, takeHome));
     setReady(true);
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -137,7 +150,7 @@ export default function PlanPage() {
       <header className="flex flex-wrap items-end justify-between gap-4 rise">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
-            Step 03 · Plan
+            Step 04 · Plan
           </p>
           <h1 className="font-display font-semibold text-3xl tracking-tight">
             Your allocation plan
@@ -155,6 +168,25 @@ export default function PlanPage() {
         </button>
       </header>
 
+      {takeHomeMonthly ? (
+        <div className="bg-card border-l-2 border-good p-3 text-sm text-ink-2">
+          Using your <strong className="text-ink">post-tax take-home</strong> of{' '}
+          {usd(takeHomeMonthly)}/mo from the{' '}
+          <Link href="/tax" className="text-moss underline font-medium hover:text-moss-deep">
+            tax estimator
+          </Link>{' '}
+          as your income — so this plan allocates real, after-tax dollars.
+        </div>
+      ) : (
+        <div className="bg-warn-bg border-l-2 border-warn-text p-3 text-sm text-warn-text">
+          This uses your <strong>gross</strong> monthly income. For after-tax accuracy, run the{' '}
+          <Link href="/tax" className="underline font-medium">
+            tax estimator
+          </Link>{' '}
+          first — interns are usually over-withheld, so your real take-home differs.
+        </div>
+      )}
+
       {/* Hero figure + supporting stats */}
       <section
         className="grid gap-px sm:grid-cols-3 bg-line border border-line shadow-card rise"
@@ -168,7 +200,10 @@ export default function PlanPage() {
             {usd(result.totalAllocatable)}
           </div>
         </div>
-        <Stat label="Monthly income (derived)" value={usd(profile.monthlyIncome)} />
+        <Stat
+          label={takeHomeMonthly ? 'Monthly take-home (post-tax)' : 'Monthly income (gross)'}
+          value={usd(takeHomeMonthly ?? profile.monthlyIncome)}
+        />
         <Stat
           label="Essential expenses (derived)"
           value={usd(profile.essentialMonthlyExpenses)}
@@ -178,6 +213,15 @@ export default function PlanPage() {
       <div className="rise" style={{ animationDelay: '0.16s' }}>
         <AllocationChart result={result} />
       </div>
+
+      {/* Feature 1.1: paycheck-by-paycheck timeline of the same waterfall. */}
+      <TimelinePanel
+        profile={profile}
+        goals={goals}
+        emergencyMonths={emergencyMonths}
+        surplusSplit={surplusSplit}
+        onProfileChange={setProfile}
+      />
 
       {/* Post-Roth surplus decision: split cash / brokerage / 401(k) */}
       <SurplusSplitter

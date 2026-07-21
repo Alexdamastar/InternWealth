@@ -66,14 +66,13 @@ export default function AllocationChart({ result }: { result: AllocationResult }
   const funded = result.steps.filter((s) => s.amount > 0);
   const total = funded.reduce((sum, s) => sum + s.amount, 0);
 
-  // Build slice geometry: [startAngle, endAngle) per funded bucket.
-  let cursor = 0;
-  const slices = funded.map((step) => {
-    const start = cursor;
+  // Build slice geometry: [startAngle, endAngle) per funded bucket, from the
+  // running sum of the amounts before each slice (pure — no render mutation).
+  const slices = funded.map((step, i) => {
+    const before = funded.slice(0, i).reduce((a, s) => a + s.amount, 0);
+    const start = (before / total) * 360;
     const sweep = (step.amount / total) * 360;
-    cursor += sweep;
-    const mid = start + sweep / 2;
-    return { step, start, end: cursor, mid };
+    return { step, start, end: start + sweep, mid: start + sweep / 2 };
   });
 
   const shown = active ?? pinned;

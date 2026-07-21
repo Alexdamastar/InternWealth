@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// The journey order doubles as navigation: get started (transactions) → goals → plan → progress.
+// The journey order doubles as navigation: get started (transactions) → goals → tax → plan → progress.
 const LINKS = [
   { href: '/ingest', label: 'Get started' },
   { href: '/onboarding', label: 'Goals' },
+  { href: '/tax', label: 'Tax' },
   { href: '/plan', label: 'Plan' },
   { href: '/progress', label: 'Progress' },
 ];
@@ -24,7 +25,7 @@ export default function NavBar() {
             est. your internship
           </span>
         </Link>
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
           {LINKS.map((l, i) => {
             const active = pathname === l.href;
             return (
@@ -36,7 +37,7 @@ export default function NavBar() {
                 }`}
               >
                 <span
-                  className={`font-mono text-[10px] ${active ? 'text-moss' : 'text-faint'}`}
+                  className={`font-bold text-xs ${active ? 'text-moss' : 'text-faint'}`}
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>

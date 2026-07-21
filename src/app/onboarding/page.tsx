@@ -5,7 +5,7 @@
 // chat responses (summary + profile + goals it updates every turn), and the
 // intern can type into any field directly — no LLM required. Once the intern is
 // happy, they press "Continue to my plan" and THAT profile+goals is what gets
-// sent forward to the engine (/ingest -> /plan). A skip button loads the sample
+// sent forward through the flow (/ingest -> /tax -> /plan). A skip button loads the sample
 // profile so the demo always works offline (no Bedrock access needed). See §10.
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
