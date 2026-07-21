@@ -63,6 +63,9 @@ export interface TaxProfile {
   // Can a parent (or anyone) claim you as a dependent? Caps the standard
   // deduction — common for students. Defaults false when absent.
   canBeClaimedAsDependent?: boolean;
+  // Net profit from a side hustle / freelance / gig work for the year. Carries
+  // ~15.3% self-employment tax with no withholding. Defaults 0.
+  selfEmploymentProfit?: number;
   // Annual non-wage taxable income with no withholding (taxable scholarships,
   // interest, dividends). Defaults 0.
   otherTaxableIncome?: number;

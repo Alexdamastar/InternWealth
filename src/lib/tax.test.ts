@@ -3,8 +3,13 @@ import {
   estimateTaxes,
   federalTax,
   lookupState,
+  selfEmploymentTax,
   MEDICARE_RATE,
   SOCIAL_SECURITY_RATE,
+  SE_EARNINGS_FACTOR,
+  SE_SOCIAL_SECURITY_RATE,
+  SE_MEDICARE_RATE,
+  SOCIAL_SECURITY_WAGE_BASE,
   type TaxInputs,
 } from './tax';
 
@@ -193,6 +198,68 @@ describe('estimateTaxes — other income & pre-tax contributions', () => {
   it('always includes an assumptions note', () => {
     const r = estimateTaxes(makeInputs());
     expect(r.notes.some((n) => /Assumes:/i.test(n))).toBe(true);
+  });
+});
+
+describe('selfEmploymentTax', () => {
+  it('is zero for zero or negative profit', () => {
+    expect(selfEmploymentTax(0, 0).seTax).toBe(0);
+    expect(selfEmploymentTax(-1000, 0).seTax).toBe(0);
+  });
+
+  it('applies the 92.35% earnings factor and combined 15.3% rate', () => {
+    // No wages -> full SS base available.
+    const profit = 10_000;
+    const netEarnings = profit * SE_EARNINGS_FACTOR;
+    const expected = netEarnings * (SE_SOCIAL_SECURITY_RATE + SE_MEDICARE_RATE);
+    expect(selfEmploymentTax(profit, 0).seTax).toBeCloseTo(expected, 6);
+  });
+
+  it('returns half the SE tax as the income-deductible portion', () => {
+    const { seTax, deductibleHalf } = selfEmploymentTax(10_000, 0);
+    expect(deductibleHalf).toBeCloseTo(seTax / 2, 6);
+  });
+
+  it('wages fill the Social Security base first, so only Medicare applies past the cap', () => {
+    // Wages already exceed the SS wage base -> SE Social Security portion is 0,
+    // only the Medicare portion remains.
+    const profit = 10_000;
+    const { seTax } = selfEmploymentTax(profit, SOCIAL_SECURITY_WAGE_BASE + 1);
+    const medicareOnly = profit * SE_EARNINGS_FACTOR * SE_MEDICARE_RATE;
+    expect(seTax).toBeCloseTo(medicareOnly, 6);
+  });
+});
+
+describe('estimateTaxes — self-employment (side hustle)', () => {
+  it('adds SE tax to what is owed and is not withheld (lowers the refund)', () => {
+    const base = estimateTaxes(makeInputs());
+    const withSide = estimateTaxes(makeInputs({ selfEmploymentProfit: 8000 }));
+    expect(withSide.selfEmploymentTax).toBeGreaterThan(0);
+    expect(withSide.federalActuallyOwed).toBeGreaterThan(base.federalActuallyOwed);
+    expect(withSide.federalRefund).toBeLessThan(base.federalRefund);
+    expect(withSide.selfEmploymentProfit).toBe(8000);
+  });
+
+  it('federal owed includes SE tax plus income tax on the (deductible-half-adjusted) profit', () => {
+    const r = estimateTaxes(
+      makeInputs({ grossMonthlyIncome: 8000, monthsWorked: 3, selfEmploymentProfit: 8000 }),
+    );
+    const { seTax, deductibleHalf } = selfEmploymentTax(8000, 24_000);
+    const incomeTax = federalTax(24_000 + 8000 - deductibleHalf - 15_000, 'single');
+    expect(r.selfEmploymentTax).toBeCloseTo(seTax, 6);
+    expect(r.federalActuallyOwed).toBeCloseTo(incomeTax + seTax, 6);
+  });
+
+  it('does not change wage take-home (SE income is separate from the paycheck)', () => {
+    const base = estimateTaxes(makeInputs());
+    const withSide = estimateTaxes(makeInputs({ selfEmploymentProfit: 8000 }));
+    expect(withSide.monthlyTakeHome).toBeCloseTo(base.monthlyTakeHome, 6);
+  });
+
+  it('warns about self-employment tax and estimated payments in the notes', () => {
+    const r = estimateTaxes(makeInputs({ selfEmploymentProfit: 8000 }));
+    expect(r.notes.some((n) => /self-employment tax/i.test(n))).toBe(true);
+    expect(r.notes.some((n) => /estimated payment|1040-ES/i.test(n))).toBe(true);
   });
 });
 

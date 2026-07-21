@@ -34,6 +34,16 @@ export const SOCIAL_SECURITY_RATE = 0.062;
 export const SOCIAL_SECURITY_WAGE_BASE = 176_100; // 2025 cap; interns rarely hit it
 export const MEDICARE_RATE = 0.0145; // no wage cap
 
+// Self-employment tax (Schedule SE) for side-hustle / freelance / gig profit.
+// Net SE earnings are 92.35% of profit; the combined rate is 15.3% — BOTH
+// halves of Social Security (12.4%, up to the wage base, which W-2 wages fill
+// first) and Medicare (2.9%, uncapped). Half of the SE tax is income-tax
+// deductible. Crucially, NOTHING is withheld on it, so it lands as tax OWED at
+// filing on top of income tax.
+export const SE_EARNINGS_FACTOR = 0.9235;
+export const SE_SOCIAL_SECURITY_RATE = SOCIAL_SECURITY_RATE * 2; // 0.124 (both halves)
+export const SE_MEDICARE_RATE = MEDICARE_RATE * 2; // 0.029 (both halves)
+
 // 2025 federal standard deduction by filing status.
 const STANDARD_DEDUCTION: Record<FilingStatus, number> = {
   single: 15_000,
@@ -157,6 +167,27 @@ export const MODELED_STATES: StateTax[] = [...STATE_TABLE].sort((a, b) =>
   a.name.localeCompare(b.name),
 );
 
+/**
+ * Self-employment tax on net profit from a side hustle (Schedule SE).
+ * `wages` are the intern's W-2 wages, which fill the Social Security wage base
+ * FIRST, so only the remaining base is available for the SE Social Security
+ * portion. Returns the total SE tax and the income-deductible half.
+ */
+export function selfEmploymentTax(
+  netProfit: number,
+  wages: number,
+): { seTax: number; deductibleHalf: number } {
+  const profit = Math.max(0, netProfit);
+  if (profit === 0) return { seTax: 0, deductibleHalf: 0 };
+  const netEarnings = profit * SE_EARNINGS_FACTOR;
+  // W-2 wages already consumed part of the Social Security wage base.
+  const ssBaseRemaining = Math.max(0, SOCIAL_SECURITY_WAGE_BASE - Math.max(0, wages));
+  const ssPortion = Math.min(netEarnings, ssBaseRemaining) * SE_SOCIAL_SECURITY_RATE;
+  const medicarePortion = netEarnings * SE_MEDICARE_RATE;
+  const seTax = ssPortion + medicarePortion;
+  return { seTax, deductibleHalf: seTax / 2 };
+}
+
 /** Federal income tax on a given amount of taxable income (post-deduction). */
 export function federalTax(taxableIncome: number, status: FilingStatus): number {
   let income = Math.max(0, taxableIncome);
@@ -185,6 +216,11 @@ export interface TaxInputs {
   // Can someone else (usually a parent) claim you as a dependent? Caps the
   // standard deduction. Default false.
   canBeClaimedAsDependent?: boolean;
+  // Net self-employment PROFIT (side hustle / freelance / gig / contractor:
+  // revenue minus business expenses) for the year. Subject to ~15.3% SE tax on
+  // top of income tax, with NO withholding, so a side hustle usually means
+  // owing at filing. Default 0.
+  selfEmploymentProfit?: number;
   // Other taxable income with NO withholding — taxable scholarships, interest,
   // dividends, etc. Added to taxable income; it can leave you UNDER-withheld.
   // Annual total for 2025. Default 0.
@@ -202,14 +238,18 @@ export interface TaxResult {
   standardDeduction: number; // deduction actually applied (post dependent cap)
   otherTaxableIncome: number; // echoed: non-wage income with no withholding
   preTaxContributions: number; // echoed: pre-tax contributions reducing taxable income
+  selfEmploymentProfit: number; // echoed: net side-hustle profit
 
   // Federal income tax.
   federalWithheld: number; // withheld across the internship (annualized rate)
-  federalActuallyOwed: number; // tax on ACTUAL earnings
+  federalActuallyOwed: number; // tax on ACTUAL earnings (incl. SE profit, less SE deduction)
   federalRefund: number; // withheld - owed (positive = refund back to you)
 
-  // FICA (Social Security + Medicare). Flat on actual wages; not refundable.
+  // FICA (Social Security + Medicare) on W-2 wages. Flat; not refundable.
   fica: number;
+  // Self-employment tax on side-hustle profit (~15.3%). NOT withheld — owed at
+  // filing on top of income tax. 0 when there's no self-employment profit.
+  selfEmploymentTax: number;
 
   // State income tax (dual-state aware).
   workState: StateTax;
@@ -245,9 +285,15 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   const canBeClaimed = inputs.canBeClaimedAsDependent ?? false;
   const otherIncome = Math.max(0, inputs.otherTaxableIncome ?? 0);
   const preTax = Math.max(0, inputs.preTaxContributions ?? 0);
+  const seProfit = Math.max(0, inputs.selfEmploymentProfit ?? 0);
 
   const actualGross = grossMonthly * months;
   const annualizedGross = grossMonthly * 12;
+
+  // --- Self-employment tax (side hustle). W-2 wages fill the Social Security
+  // base first; half the SE tax is deductible against income tax. Nothing is
+  // withheld on it, so it's owed at filing. ---
+  const { seTax, deductibleHalf: seDeductibleHalf } = selfEmploymentTax(seProfit, actualGross);
 
   // --- Federal income tax (annualized withholding vs. actual liability) ---
   // Withholding basis: payroll uses a default W-4 — the FULL standard deduction,
@@ -260,10 +306,14 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   const federalWithheld = monthlyFederalWithheld * months;
 
   // Actual liability: apply the dependent-capped deduction, subtract pre-tax
-  // contributions, and add non-wage taxable income.
+  // contributions and the deductible half of SE tax, and add non-wage income +
+  // self-employment profit.
   const filingDeduction = standardDeductionFor(status, actualGross, canBeClaimed);
-  const federalTaxableIncome = actualGross + otherIncome - preTax - filingDeduction;
-  const federalActuallyOwed = federalTax(federalTaxableIncome, status);
+  const federalTaxableIncome =
+    actualGross + otherIncome + seProfit - preTax - seDeductibleHalf - filingDeduction;
+  const federalIncomeTax = federalTax(federalTaxableIncome, status);
+  // Total federal owed includes SE tax (which withholding never covers).
+  const federalActuallyOwed = federalIncomeTax + seTax;
   const federalRefund = federalWithheld - federalActuallyOwed;
 
   // --- FICA: flat on actual wages, Social Security capped at the wage base ---
@@ -294,10 +344,11 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   );
   const totalTakeHome = monthlyTakeHome * months;
 
+  // federalActuallyOwed already includes SE tax; add FICA + state for the total.
   const totalTaxOwed = federalActuallyOwed + fica + totalStateOwed;
-  // Effective rate is measured against total taxable income (wages + other),
-  // so adding non-wage income doesn't look like a free lunch.
-  const incomeBase = actualGross + otherIncome;
+  // Effective rate is measured against total income (wages + other + SE profit),
+  // so adding income doesn't look like a free lunch.
+  const incomeBase = actualGross + otherIncome + seProfit;
   const effectiveTaxRate = incomeBase > 0 ? totalTaxOwed / incomeBase : 0;
   // Net cash situation at filing: federal refund, less any state still owed.
   const estimatedRefund = federalRefund - stateStillOwedAtFiling;
@@ -318,8 +369,17 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
     notes.push(
       `Heads up: your income here withholds LESS federal tax than you'll owe — expect to owe ` +
         `about $${Math.round(-federalRefund).toLocaleString('en-US')} at filing. This usually ` +
-        `happens when non-wage income (like a taxable scholarship) isn't withheld on, or you can ` +
-        `be claimed as a dependent. Set that money aside now.`,
+        `happens when income with no withholding (a side hustle or taxable scholarship) is in ` +
+        `the mix, or you can be claimed as a dependent. Set that money aside now.`,
+    );
+  }
+  if (seProfit > 0) {
+    notes.push(
+      `Your side hustle profit of $${Math.round(seProfit).toLocaleString('en-US')} owes about ` +
+        `$${Math.round(seTax).toLocaleString('en-US')} in self-employment tax (~15.3% for both ` +
+        `halves of Social Security + Medicare) PLUS income tax — and none of it is withheld. ` +
+        `Set aside roughly 25–30% of that profit for taxes. If you expect to owe $1,000+, the IRS ` +
+        `wants quarterly estimated payments (Form 1040-ES).`,
     );
   }
   if (canBeClaimed && filingDeduction < STANDARD_DEDUCTION[status]) {
@@ -344,9 +404,9 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
   }
   // Be explicit about what we assume, so nothing is silently pretended.
   notes.push(
-    `Assumes: not 65+ or blind, no dependents of your own, no self-employment/pension/` +
-      `unemployment income, and the standard deduction (no itemizing). Adjust on the IRS ` +
-      `estimator if any of those apply to you.`,
+    `Assumes: not 65+ or blind, no dependents of your own, no pension/unemployment/retirement ` +
+      `income, and the standard deduction (no itemizing). Adjust on the IRS estimator if any of ` +
+      `those apply to you.`,
   );
   if (home.code && work.code && home.code !== work.code) {
     if (stateStillOwedAtFiling > 0) {
@@ -379,10 +439,12 @@ export function estimateTaxes(inputs: TaxInputs): TaxResult {
     standardDeduction: filingDeduction,
     otherTaxableIncome: otherIncome,
     preTaxContributions: preTax,
+    selfEmploymentProfit: seProfit,
     federalWithheld,
     federalActuallyOwed,
     federalRefund,
     fica,
+    selfEmploymentTax: seTax,
     workState: work,
     homeState: home,
     workStateWithheld,

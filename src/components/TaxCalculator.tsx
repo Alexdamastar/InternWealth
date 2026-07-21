@@ -24,6 +24,7 @@ function toInputs(p: TaxProfile): TaxInputs {
     workState: p.workState,
     homeState: p.homeState,
     canBeClaimedAsDependent: p.canBeClaimedAsDependent,
+    selfEmploymentProfit: p.selfEmploymentProfit,
     otherTaxableIncome: p.otherTaxableIncome,
     preTaxContributions: p.preTaxContributions,
   };
@@ -37,7 +38,10 @@ interface Props {
 export default function TaxCalculator({ value, onChange }: Props) {
   // Advanced (non-wage income / pre-tax) is opt-in — most interns leave it off.
   const [showAdvanced, setShowAdvanced] = useState(
-    () => Boolean(value.otherTaxableIncome) || Boolean(value.preTaxContributions),
+    () =>
+      Boolean(value.selfEmploymentProfit) ||
+      Boolean(value.otherTaxableIncome) ||
+      Boolean(value.preTaxContributions),
   );
   const result = useMemo(() => estimateTaxes(toInputs(value)), [value]);
 
@@ -112,10 +116,15 @@ export default function TaxCalculator({ value, onChange }: Props) {
           onClick={() => setShowAdvanced((s) => !s)}
           className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
         >
-          {showAdvanced ? '− Hide' : '+ Add'} other income or pre-tax contributions
+          {showAdvanced ? '− Hide' : '+ Add'} a side hustle, other income, or pre-tax contributions
         </button>
         {showAdvanced && (
           <div className="grid grid-cols-2 gap-x-3 gap-y-3 mt-3">
+            <Money
+              label="Side hustle / freelance profit for the year ($)"
+              value={value.selfEmploymentProfit ?? 0}
+              onChange={(v) => patch({ selfEmploymentProfit: v })}
+            />
             <Money
               label="Other taxable income for the year ($)"
               value={value.otherTaxableIncome ?? 0}
@@ -127,9 +136,10 @@ export default function TaxCalculator({ value, onChange }: Props) {
               onChange={(v) => patch({ preTaxContributions: v })}
             />
             <p className="col-span-2 text-[11px] text-gray-400">
-              Other income = taxable scholarships, interest, or dividends (nothing is withheld on
-              it). Pre-tax contributions to a traditional IRA or HSA lower your taxable income.
-              Leave both at 0 if they don&apos;t apply.
+              Side hustle profit = freelance, gig, or contractor income minus business expenses;
+              it carries ~15.3% self-employment tax with nothing withheld. Other income = taxable
+              scholarships, interest, or dividends. Pre-tax contributions to a traditional IRA or
+              HSA lower your taxable income. Leave any at 0 if they don&apos;t apply.
             </p>
           </div>
         )}
@@ -164,14 +174,31 @@ export default function TaxCalculator({ value, onChange }: Props) {
       <div className="text-sm">
         <p className="text-xs font-medium text-gray-500 mb-1">Breakdown (for the internship)</p>
         <dl className="divide-y divide-gray-100 border border-gray-200 rounded-md">
-          <Row k="Gross earned" v={usd(result.actualGrossEarned)} />
-          <Row k="Federal income tax (owed)" v={`- ${usd(result.federalActuallyOwed)}`} />
+          <Row k="Gross earned (wages)" v={usd(result.actualGrossEarned)} />
+          {result.selfEmploymentProfit > 0 && (
+            <Row k="Side hustle profit" v={usd(result.selfEmploymentProfit)} />
+          )}
+          <Row
+            k="Federal income tax (owed)"
+            v={`- ${usd(result.federalActuallyOwed - result.selfEmploymentTax)}`}
+          />
           <Row
             k="Federal tax withheld"
             v={usd(result.federalWithheld)}
-            sub={`Refund of ${usd(Math.max(0, result.federalRefund))} at filing`}
+            sub={
+              result.federalRefund >= 0
+                ? `Refund of ${usd(result.federalRefund)} at filing`
+                : `You'll owe ${usd(-result.federalRefund)} at filing`
+            }
           />
           <Row k="FICA (Social Security + Medicare)" v={`- ${usd(result.fica)}`} />
+          {result.selfEmploymentTax > 0 && (
+            <Row
+              k="Self-employment tax"
+              v={`- ${usd(result.selfEmploymentTax)}`}
+              sub="~15.3% on side hustle profit — nothing withheld, owed at filing"
+            />
+          )}
           <Row
             k={`State income tax${result.workState.code && result.homeState.code && result.workState.code !== result.homeState.code ? ' (net of credit)' : ''}`}
             v={`- ${usd(result.totalStateOwed)}`}
