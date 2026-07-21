@@ -98,18 +98,25 @@ export default function ChatPanel({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-      <div ref={scrollRef} className="max-h-96 overflow-y-auto space-y-3 pr-1">
+    <div className="bg-card border border-line shadow-card flex flex-col">
+      <div className="flex items-center gap-2 border-b border-line px-5 py-3">
+        <span className="w-2 h-2 rounded-full bg-moss" />
+        <span className="font-mono text-xs uppercase tracking-wider text-faint">
+          Chat with InternWealth
+        </span>
+      </div>
+
+      <div ref={scrollRef} className="max-h-96 overflow-y-auto space-y-3 p-5">
         {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+              className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed ${
                 m.role === 'user'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-moss text-paper rounded-l-lg rounded-tr-lg'
+                  : 'bg-paper border border-line text-ink rounded-r-lg rounded-tl-lg'
               }`}
             >
               {m.role === 'assistant' ? (
@@ -125,22 +132,22 @@ export default function ChatPanel({
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-500 rounded-lg px-3 py-2 text-sm italic">
-              Thinking…
+            <div className="bg-paper border border-line text-faint rounded-r-lg rounded-tl-lg px-3.5 py-2.5 text-sm dot-pulse">
+              <span>●</span> <span>●</span> <span>●</span>
             </div>
           </div>
         )}
       </div>
 
       {notice && (
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+        <div className="mx-5 mb-3 bg-warn-bg border-l-2 border-warn-text p-3 text-sm text-warn-text">
           {notice}
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 border-t border-line p-4">
         <input
-          className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+          className="flex-1 bg-paper/60 border border-line px-3 py-2 text-sm placeholder:text-faint focus:border-moss"
           placeholder="Type your answer…"
           value={input}
           disabled={loading}
@@ -150,7 +157,7 @@ export default function ChatPanel({
         <button
           onClick={send}
           disabled={loading || input.trim() === ''}
-          className="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
+          className="bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-40"
         >
           Send
         </button>

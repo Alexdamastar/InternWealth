@@ -112,62 +112,79 @@ export default function IngestPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h1 className="text-2xl font-bold tracking-tight mb-1">Transactions</h1>
-        <p className="text-gray-600 text-sm max-w-2xl">
-          Upload a CSV bank statement, paste rows, or load the sample. We categorize
-          each transaction (via Claude on Bedrock if your AWS access is available,
-          otherwise a built-in keyword categorizer) and summarize your spending.
+    <div className="space-y-8">
+      <header className="rise">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-3">
+          Step 02 · Transactions
         </p>
-      </section>
+        <h1 className="font-display font-semibold text-3xl tracking-tight">
+          Where your money went
+        </h1>
+        <p className="text-sm text-ink-2 mt-2 max-w-2xl leading-relaxed">
+          Upload a CSV bank statement, paste rows, or load the sample. We
+          categorize each transaction (via Claude on Bedrock if your AWS access
+          is available, otherwise a built-in keyword categorizer) and summarize
+          your spending.
+        </p>
+      </header>
 
-      <section className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+      <section
+        className="bg-card border border-line shadow-card p-5 space-y-5 rise"
+        style={{ animationDelay: '0.1s' }}
+      >
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm font-medium">
-            <span className="mr-2">CSV file</span>
+            <span className="mr-2 font-mono text-xs uppercase tracking-wider text-faint">
+              CSV file
+            </span>
             <input
               type="file"
               accept=".csv,text/csv"
               onChange={onFile}
               disabled={busy}
-              className="text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-indigo-700 file:font-medium hover:file:bg-indigo-100"
+              className="text-sm text-ink-2 file:mr-3 file:border file:border-moss file:bg-transparent file:px-3 file:py-1.5 file:text-moss file:font-semibold file:text-sm hover:file:bg-moss hover:file:text-paper file:transition-colors file:cursor-pointer"
             />
           </label>
           <button
             onClick={onLoadSample}
             disabled={busy}
-            className="bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            className="border border-ink/25 px-4 py-2 text-sm font-semibold hover:border-ink hover:bg-paper transition-colors disabled:opacity-50"
           >
             Load sample statement
           </button>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Or paste CSV rows</label>
+          <label className="block font-mono text-xs uppercase tracking-wider text-faint mb-1.5">
+            Or paste CSV rows
+          </label>
           <textarea
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
             rows={4}
             placeholder="Date,Description,Amount&#10;2026-07-01,SAFEWAY,-42.10"
-            className="w-full rounded-md border border-gray-300 p-2 text-sm font-mono"
+            className="w-full bg-paper/60 border border-line p-3 text-sm font-mono placeholder:text-faint focus:border-moss"
             disabled={busy}
           />
           <button
             onClick={onPaste}
             disabled={busy}
-            className="mt-2 bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            className="mt-2 bg-moss text-paper px-4 py-2 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors disabled:opacity-50"
           >
             Parse pasted text
           </button>
         </div>
 
-        {status && <p className="text-sm text-gray-600">{status}</p>}
+        {status && (
+          <p className="text-sm text-ink-2 font-mono border-t border-line pt-3">
+            {status}
+          </p>
+        )}
       </section>
 
       {txns.length > 0 && (
         <>
-          <section className="grid gap-4 sm:grid-cols-3">
+          <section className="grid gap-px sm:grid-cols-3 bg-line border border-line shadow-card">
             <Stat label="Est. monthly income" value={usd(monthlyIncome)} />
             <Stat label="Total outflow (period)" value={usd(totalOutflow)} />
             <Stat label="Transactions" value={String(txns.length)} />
@@ -175,32 +192,36 @@ export default function IngestPage() {
 
           {spendingByCategory && <SpendingChart spendingByCategory={spendingByCategory} />}
 
-          <section className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold text-sm mb-3">Transactions</h3>
+          <section className="bg-card border border-line shadow-card p-5">
+            <h3 className="font-display font-semibold text-lg mb-3">
+              Every transaction
+            </h3>
             <div className="max-h-96 overflow-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-gray-500 border-b border-gray-200">
-                  <tr>
-                    <th className="py-1.5 pr-3 font-medium">Date</th>
-                    <th className="py-1.5 pr-3 font-medium">Description</th>
-                    <th className="py-1.5 pr-3 font-medium text-right">Amount</th>
-                    <th className="py-1.5 font-medium">Category</th>
+                <thead className="text-left text-faint border-b border-ink/60 sticky top-0 bg-card">
+                  <tr className="font-mono text-xs uppercase tracking-wider">
+                    <th className="py-2 pr-3 font-medium">Date</th>
+                    <th className="py-2 pr-3 font-medium">Description</th>
+                    <th className="py-2 pr-3 font-medium text-right">Amount</th>
+                    <th className="py-2 font-medium">Category</th>
                   </tr>
                 </thead>
                 <tbody>
                   {txns.map((t, i) => (
-                    <tr key={i} className="border-b border-gray-100 last:border-0">
-                      <td className="py-1.5 pr-3 whitespace-nowrap text-gray-600">{t.date}</td>
+                    <tr key={i} className="border-b border-line/60 last:border-0">
+                      <td className="py-1.5 pr-3 whitespace-nowrap text-faint font-mono text-xs">
+                        {t.date}
+                      </td>
                       <td className="py-1.5 pr-3">{t.description}</td>
                       <td
-                        className={`py-1.5 pr-3 text-right whitespace-nowrap tabular-nums ${
-                          t.amount < 0 ? 'text-gray-900' : 'text-green-700'
+                        className={`py-1.5 pr-3 text-right whitespace-nowrap font-mono tabular-nums ${
+                          t.amount < 0 ? 'text-ink' : 'text-good'
                         }`}
                       >
                         {usd(t.amount)}
                       </td>
                       <td className="py-1.5">
-                        <span className="inline-block rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                        <span className="inline-block border border-line bg-paper/70 px-2 py-0.5 text-xs text-ink-2">
                           {t.category ? CATEGORY_LABELS[t.category] : '—'}
                         </span>
                       </td>
@@ -214,7 +235,7 @@ export default function IngestPage() {
           <section>
             <Link
               href="/plan"
-              className="inline-block bg-indigo-600 text-white rounded-md px-5 py-2.5 text-sm font-medium hover:bg-indigo-700"
+              className="inline-block bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
             >
               Continue to Plan →
             </Link>
@@ -227,9 +248,11 @@ export default function IngestPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className="text-xl font-semibold tabular-nums">{value}</div>
+    <div className="bg-card p-5">
+      <div className="font-mono text-xs uppercase tracking-wider text-faint mb-1.5">
+        {label}
+      </div>
+      <div className="font-display font-semibold text-2xl">{value}</div>
     </div>
   );
 }

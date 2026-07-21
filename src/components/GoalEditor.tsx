@@ -52,8 +52,8 @@ export default function GoalEditor({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-      <h3 className="font-semibold text-sm">Adjust inputs — plan recomputes live</h3>
+    <div className="bg-card border border-line shadow-card p-5 space-y-4">
+      <h3 className="font-display font-semibold text-lg">Adjust inputs — plan recomputes live</h3>
 
       {/* Engine drivers */}
       <div className="grid grid-cols-2 gap-3">
@@ -91,10 +91,10 @@ export default function GoalEditor({
           value={profile.rothContributedThisYear}
           onChange={(v) => onProfileChange({ ...profile, rothContributedThisYear: v })}
         />
-        <label className="flex flex-col text-xs text-gray-600 gap-1">
+        <label className="flex flex-col text-xs text-ink-2 gap-1">
           401(k) match realistically vests?
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={profile.employer401kVests ? 'yes' : 'no'}
             onChange={(e) =>
               onProfileChange({ ...profile, employer401kVests: e.target.value === 'yes' })
@@ -108,19 +108,19 @@ export default function GoalEditor({
 
       {/* Goals list */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500">Goals</p>
+        <p className="font-mono text-xs uppercase tracking-wider text-faint">Goals</p>
         {goals
           .slice()
           .sort((a, b) => a.priority - b.priority)
           .map((g) => (
             <div key={g.id} className="flex items-center gap-2">
               <input
-                className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-sm"
+                className="flex-1 bg-card border border-line px-2 py-1 text-sm focus:border-moss"
                 value={g.label}
                 onChange={(e) => updateGoal(g.id, { label: e.target.value })}
               />
               <select
-                className="border border-gray-300 rounded-md px-1.5 py-1 text-xs"
+                className="bg-card border border-line px-1.5 py-1 text-xs focus:border-moss"
                 value={g.kind}
                 onChange={(e) => updateGoal(g.id, { kind: e.target.value as GoalKind })}
               >
@@ -133,7 +133,7 @@ export default function GoalEditor({
               <input
                 type="number"
                 placeholder="target $"
-                className="w-24 border border-gray-300 rounded-md px-2 py-1 text-xs"
+                className="w-24 bg-card border border-line px-2 py-1 text-xs font-mono focus:border-moss"
                 value={g.targetAmount ?? ''}
                 onChange={(e) =>
                   updateGoal(g.id, {
@@ -143,7 +143,7 @@ export default function GoalEditor({
               />
               <button
                 onClick={() => removeGoal(g.id)}
-                className="text-gray-400 hover:text-red-600 text-sm px-1"
+                className="text-faint hover:text-bad text-sm px-1"
                 aria-label="Remove goal"
               >
                 ✕
@@ -152,7 +152,7 @@ export default function GoalEditor({
           ))}
         <div className="flex items-center gap-2 pt-1">
           <input
-            className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-sm"
+            className="flex-1 bg-card border border-line px-2 py-1 text-sm focus:border-moss"
             placeholder="Add a goal…"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
@@ -160,7 +160,7 @@ export default function GoalEditor({
           />
           <button
             onClick={addGoal}
-            className="bg-indigo-600 text-white rounded-md px-3 py-1 text-sm font-medium"
+            className="bg-moss text-paper px-3 py-1.5 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors"
           >
             Add
           </button>
@@ -184,13 +184,13 @@ function NumberField({
   max?: number;
 }) {
   return (
-    <label className="flex flex-col text-xs text-gray-600 gap-1">
+    <label className="flex flex-col text-xs text-ink-2 gap-1">
       {label}
       <input
         type="number"
         min={min}
         max={max}
-        className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+        className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
         value={Number.isFinite(value) ? value : 0}
         onChange={(e) => onChange(Number(e.target.value))}
       />

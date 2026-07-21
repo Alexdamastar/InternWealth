@@ -173,15 +173,15 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
     <div className="space-y-4">
       {/* Read-only recap the assistant writes / updates as you chat (rendered Markdown). */}
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-gray-500">Summary</span>
-        <span className="text-[11px] text-gray-400">
+        <span className="font-mono text-xs uppercase tracking-wider text-faint">Summary</span>
+        <span className="text-[11px] text-faint">
           The assistant writes and updates this as you chat.
         </span>
-        <div className="max-h-64 overflow-y-auto bg-gray-50 border border-gray-200 rounded-md p-3 text-sm text-gray-800">
+        <div className="max-h-64 overflow-y-auto bg-paper/60 border border-line p-3 text-sm text-ink">
           {hasSummary ? (
             <Markdown content={plan.summary} />
           ) : (
-            <p className="text-gray-400">Your recap will appear here as you chat.</p>
+            <p className="text-faint">Your recap will appear here as you chat.</p>
           )}
         </div>
       </div>
@@ -208,10 +208,10 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
           value={p.rothContributedThisYear}
           onChange={(v) => patchProfile({ rothContributedThisYear: v })}
         />
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 text-xs text-ink-2">
           Work state
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={p.workState}
             onChange={(e) => patchProfile({ workState: e.target.value })}
           >
@@ -223,10 +223,10 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 text-xs text-ink-2">
           401(k) match realistically vests?
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={p.employer401kVests ? 'yes' : 'no'}
             onChange={(e) => patchProfile({ employer401kVests: e.target.value === 'yes' })}
           >
@@ -234,10 +234,10 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
             <option value="yes">Yes</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-gray-600">
+        <label className="flex flex-col gap-1 text-xs text-ink-2">
           Internship ending soon?
           <select
-            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+            className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
             value={p.internshipEndsSoon ? 'yes' : 'no'}
             onChange={(e) => patchProfile({ internshipEndsSoon: e.target.value === 'yes' })}
           >
@@ -250,17 +250,17 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
       {/* Goals — the four core buckets are always present and permanent; extra
           goals ('401k' / 'custom') follow and are fully editable/removable. */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500">Goals</p>
+        <p className="font-mono text-xs uppercase tracking-wider text-faint">Goals</p>
 
         {coreRows.map((g) => (
           <div key={g.id} className="flex items-center gap-2">
             <input
-              className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-sm"
+              className="flex-1 bg-card border border-line px-2 py-1 text-sm focus:border-moss"
               value={g.label}
               onChange={(e) => upsertCoreGoal(g.kind as CoreKind, { label: e.target.value })}
             />
             {/* Locked category — core buckets can't change kind or be removed. */}
-            <span className="border border-gray-200 bg-gray-50 rounded-md px-1.5 py-1 text-xs text-gray-500">
+            <span className="border border-line bg-paper/70 px-1.5 py-1 font-mono text-xs text-faint">
               {g.kind}
             </span>
             <TargetInput
@@ -273,12 +273,12 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
         {nonCoreGoals.map((g) => (
           <div key={g.id} className="flex items-center gap-2">
             <input
-              className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-sm"
+              className="flex-1 bg-card border border-line px-2 py-1 text-sm focus:border-moss"
               value={g.label}
               onChange={(e) => updateGoal(g.id, { label: e.target.value })}
             />
             <select
-              className="border border-gray-300 rounded-md px-1.5 py-1 text-xs"
+              className="bg-card border border-line px-1.5 py-1 text-xs focus:border-moss"
               value={g.kind}
               onChange={(e) => updateGoal(g.id, { kind: e.target.value as GoalKind })}
             >
@@ -294,7 +294,7 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
             />
             <button
               onClick={() => removeGoal(g.id)}
-              className="text-gray-400 hover:text-red-600 text-sm px-1"
+              className="text-faint hover:text-bad text-sm px-1"
               aria-label="Remove goal"
             >
               ✕
@@ -304,7 +304,7 @@ export default function WorkingPlanEditor({ plan, onChange }: Props) {
 
         <button
           onClick={addGoal}
-          className="text-xs text-indigo-600 hover:underline pt-1"
+          className="text-xs text-moss font-semibold hover:underline underline-offset-2 pt-1"
         >
           + Add a goal
         </button>
@@ -325,12 +325,12 @@ function Money({
   onChange: (v: number) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-gray-600">
+    <label className="flex flex-col gap-1 text-xs text-ink-2">
       {label}
       <input
         type="text"
         inputMode="numeric"
-        className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900"
+        className="bg-card border border-line px-2 py-1.5 text-sm text-ink focus:border-moss"
         value={Number.isFinite(value) ? String(value) : '0'}
         onChange={(e) => {
           const digits = e.target.value.replace(/[^0-9]/g, '');
@@ -355,7 +355,7 @@ function TargetInput({
       type="text"
       inputMode="numeric"
       placeholder="target $"
-      className="w-20 border border-gray-300 rounded-md px-2 py-1 text-xs"
+      className="w-20 bg-card border border-line px-2 py-1 text-xs font-mono focus:border-moss"
       value={value ?? ''}
       onChange={(e) => {
         const digits = e.target.value.replace(/[^0-9]/g, '');

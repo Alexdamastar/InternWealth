@@ -24,64 +24,100 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="pt-4">
-        <h1 className="text-3xl font-bold tracking-tight mb-3">
-          Turn a 21-page finance guide into a 5-minute plan.
+    <div>
+      {/* Hero — oversized serif, ledger-rule underline, asymmetric layout */}
+      <section className="pt-10 pb-14 rise">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss mb-5">
+          A field guide to your first real paycheck
+        </p>
+        <h1 className="font-display font-semibold text-[clamp(2.4rem,6vw,4.2rem)] leading-[1.04] tracking-tight max-w-3xl text-balance">
+          Turn a 21-page finance guide into a{' '}
+          <em className="text-moss not-italic border-b-4 border-moss/30">
+            5-minute plan.
+          </em>
         </h1>
-        <p className="text-gray-700 max-w-2xl leading-relaxed">
-          InternWealth is a locally-run, open-source financial agent for incoming
-          SWE interns. Answer a few questions, upload your bank transactions, and
-          get a <strong>deterministic, personalized allocation plan</strong> —
-          emergency fund, school-year expenses, Roth IRA, 401(k), and brokerage —
-          plus a plain-English explanation. The knowledge base is a real financial
-          guide written by a former Amazon SWE intern.
-        </p>
-        <p className="text-gray-500 text-sm max-w-2xl mt-3 italic">
-          &ldquo;No incoming intern reads 21 pages. So we turned that guide into an
-          agent that personalizes it to your actual numbers in 5 minutes.
-          That&apos;s paying it forward.&rdquo;
-        </p>
+        <div className="mt-7 grid gap-8 lg:grid-cols-[1fr_minmax(240px,300px)] lg:gap-14 items-start">
+          <p className="text-ink-2 leading-relaxed text-lg max-w-2xl">
+            InternWealth is a locally-run, open-source financial agent for
+            incoming SWE interns. Answer a few questions, upload your bank
+            transactions, and get a{' '}
+            <strong className="text-ink">
+              deterministic, personalized allocation plan
+            </strong>{' '}
+            — emergency fund, school-year expenses, Roth IRA, 401(k), and
+            brokerage — plus a plain-English explanation.
+          </p>
+          <blockquote className="border-l-2 border-moss/40 pl-4 text-sm text-faint italic leading-relaxed">
+            &ldquo;No incoming intern reads 21 pages. So we turned that guide
+            into an agent that personalizes it to your actual numbers in 5
+            minutes. That&apos;s paying it forward.&rdquo;
+          </blockquote>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 mt-9">
+          <Link
+            href="/onboarding"
+            className="bg-moss text-paper px-7 py-3 text-sm font-semibold tracking-wide hover:bg-moss-deep transition-colors shadow-card"
+          >
+            Start — set my goals →
+          </Link>
+          <button
+            onClick={loadSample}
+            className="px-7 py-3 text-sm font-semibold text-ink border border-ink/25 hover:border-ink hover:bg-card transition-colors"
+          >
+            Load sample statement
+          </button>
+          <span className="text-xs text-faint">zero-setup demo, no key needed</span>
+        </div>
       </section>
 
-      <section className="flex flex-wrap gap-3">
-        <Link
-          href="/onboarding"
-          className="bg-indigo-600 text-white rounded-md px-5 py-2.5 text-sm font-medium hover:bg-indigo-700"
-        >
-          Start — set my goals
-        </Link>
-        <button
-          onClick={loadSample}
-          className="bg-white border border-gray-300 rounded-md px-5 py-2.5 text-sm font-medium hover:bg-gray-50"
-        >
-          Load sample statement (zero-setup demo)
-        </button>
-      </section>
+      {/* Ledger rule */}
+      <div className="border-t-2 border-ink/80" />
+      <div className="border-t border-ink/30 mt-[3px]" />
 
-      <section className="grid gap-4 sm:grid-cols-3 pt-4">
-        <Feature
+      {/* Principles — numbered ledger entries instead of cards */}
+      <section className="grid sm:grid-cols-3 gap-x-10 gap-y-8 pt-10 pb-6">
+        <Principle
+          n="01"
           title="Math is deterministic"
           body="The allocation waterfall is coded TypeScript straight from the guide. The LLM never computes a dollar amount — numbers are correct and reproducible."
+          delay="0.1s"
         />
-        <Feature
+        <Principle
+          n="02"
           title="Runs locally, BYO key"
           body="No server we own. Your statements and goals live only on your machine. The only thing that leaves is text you send to Anthropic under your own key."
+          delay="0.2s"
         />
-        <Feature
+        <Principle
+          n="03"
           title="Works without an LLM"
           body="Categorization has a keyword fallback and the plan renders from deterministic rationales, so the core demo never depends on a live API call."
+          delay="0.3s"
         />
       </section>
     </div>
   );
 }
 
-function Feature({ title, body }: { title: string; body: string }) {
+function Principle({
+  n,
+  title,
+  body,
+  delay,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  delay: string;
+}) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <h3 className="font-semibold text-sm mb-1">{title}</h3>
-      <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+    <div className="rise" style={{ animationDelay: delay }}>
+      <div className="flex items-baseline gap-3 mb-2">
+        <span className="font-mono text-xs text-moss">{n}</span>
+        <h3 className="font-display font-semibold text-lg text-ink">{title}</h3>
+      </div>
+      <p className="text-sm text-ink-2 leading-relaxed">{body}</p>
     </div>
   );
 }
