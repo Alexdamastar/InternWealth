@@ -1,7 +1,119 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   InternWealth design tokens — "warm ledger" aesthetic.
+   Paper + ink + moss green, Fraunces display serif, Spline Sans body,
+   Spline Sans Mono for money figures and fine print.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Surfaces & ink */
+  --color-paper: #f6f1e7; /* page plane */
+  --color-card: #fffdf8; /* raised surface */
+  --color-ink: #1d1a15; /* primary text */
+  --color-ink-2: #57534a; /* secondary text */
+  --color-faint: #8a857a; /* muted / labels */
+  --color-line: #e5ddca; /* hairline rules */
+
+  /* Brand accent */
+  --color-moss: #175e40;
+  --color-moss-deep: #0e4530;
+
+  /* Status & deltas */
+  --color-good: #006300;
+  --color-bad: #b42318;
+  --color-warn-bg: #f9efd8;
+  --color-warn-text: #7c5a0b;
+
+  /* Type */
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-spline), system-ui, sans-serif;
+  --font-mono: var(--font-spline-mono), ui-monospace, "SF Mono", monospace;
+
+  /* Elevation */
+  --shadow-card:
+    0 1px 2px rgba(29, 26, 21, 0.05), 0 6px 20px -8px rgba(29, 26, 21, 0.08);
+}
+
 html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+  font-family: var(--font-sans);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Paper tooth: a faint fixed noise overlay in multiply, above all content. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--color-moss);
+  color: var(--color-paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-moss);
+  outline-offset: 2px;
+}
+
+input[type="range"] {
+  accent-color: var(--color-moss);
+}
+
+/* Page-load reveal: apply .rise, stagger with inline animation-delay. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Typing indicator dots in the chat. */
+@keyframes dot-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.dot-pulse span {
+  display: inline-block;
+  animation: dot-pulse 1.2s infinite ease-in-out;
+}
+
+.dot-pulse span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dot-pulse span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .dot-pulse span {
+    animation: none;
+  }
 }

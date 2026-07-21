@@ -1,12 +1,15 @@
 'use client';
 
-// Horizontal bar chart of spending (absolute outflows) by category.
-// Only categories with >0 spending are shown. See §7.
+// Horizontal bar chart of spending (absolute outflows) by category. See §7.
+// This is a magnitude ("how much per category") chart, so per the dataviz
+// method it uses ONE sequential hue — not a rainbow of categorical colors.
+// Category identity is carried by the row label, value by the bar length +
+// direct label at the tip.
 
 import {
   Bar,
   BarChart,
-  Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,19 +30,9 @@ const CATEGORY_LABELS: Record<TxCategory, string> = {
   other: 'Other',
 };
 
-// Brand-neutral categorical palette (indigo-forward to match the app accent).
-const COLORS = [
-  '#4f46e5',
-  '#6366f1',
-  '#8b5cf6',
-  '#a855f7',
-  '#ec4899',
-  '#f43f5e',
-  '#f97316',
-  '#eab308',
-  '#22c55e',
-  '#14b8a6',
-];
+// One-hue ordinal ramp (moss family, dark→light with rank). All steps clear
+// 2:1 on the card surface; the direct value labels carry exact numbers.
+const RAMP = ['#0e4530', '#175e40', '#2b7a55', '#47946d', '#67ad88'];
 
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -56,37 +49,62 @@ export default function SpendingChart({
       label: CATEGORY_LABELS[category] ?? category,
       value: Math.round(value),
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value)
+    .map((d, i) => ({ ...d, fill: RAMP[Math.min(i, RAMP.length - 1)] }));
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <h3 className="font-semibold text-sm mb-3">Spending by category</h3>
+    <div className="bg-card border border-line shadow-card p-5">
+      <h3 className="font-display font-semibold text-lg mb-3">
+        Spending by category
+      </h3>
       {data.length === 0 ? (
-        <p className="text-sm text-gray-500">No spending to show yet.</p>
+        <p className="text-sm text-faint">No spending to show yet.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={Math.max(180, data.length * 40)}>
+        <ResponsiveContainer width="100%" height={Math.max(180, data.length * 38)}>
           <BarChart
             data={data}
             layout="vertical"
-            margin={{ top: 4, right: 24, bottom: 4, left: 8 }}
+            margin={{ top: 4, right: 64, bottom: 4, left: 8 }}
           >
-            <XAxis type="number" tickFormatter={(v) => usd(Number(v))} fontSize={12} />
+            <XAxis
+              type="number"
+              tickFormatter={(v) => usd(Number(v))}
+              fontSize={11}
+              stroke="#8a857a"
+              tickLine={false}
+              axisLine={{ stroke: '#e5ddca' }}
+            />
             <YAxis
               type="category"
               dataKey="label"
-              width={100}
+              width={104}
               fontSize={12}
+              stroke="#57534a"
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
               formatter={(v) => usd(Number(v))}
-              cursor={{ fill: 'rgba(79,70,229,0.06)' }}
+              cursor={{ fill: 'rgba(23,94,64,0.06)' }}
+              contentStyle={{
+                background: '#fffdf8',
+                border: '1px solid #e5ddca',
+                borderRadius: 0,
+                fontSize: 12,
+                fontFamily: 'var(--font-mono)',
+              }}
             />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {data.map((entry, i) => (
-                <Cell key={entry.category} fill={COLORS[i % COLORS.length]} />
-              ))}
+            <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]}>
+              <LabelList
+                dataKey="value"
+                position="right"
+                formatter={(v: React.ReactNode) => usd(Number(v))}
+                style={{
+                  fill: '#57534a',
+                  fontSize: 11,
+                  fontFamily: 'var(--font-mono)',
+                }}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>

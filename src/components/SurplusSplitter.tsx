@@ -10,9 +10,9 @@ import type { SurplusChoice, SurplusOption, SurplusSplit } from '@/lib/types';
 const CHOICES: SurplusChoice[] = ['cash', 'brokerage', '401k'];
 
 const COLORS: Record<SurplusChoice, string> = {
-  cash: '#64748b',
-  brokerage: '#6366f1',
-  '401k': '#f59e0b',
+  cash: '#eb6834',
+  brokerage: '#1baf7a',
+  '401k': '#eda100',
 };
 
 const usd = (n: number) =>
@@ -46,12 +46,12 @@ export default function SurplusSplitter({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+    <div className="bg-card border border-line shadow-card p-5 space-y-4">
       <div>
-        <h3 className="font-semibold text-sm">
-          Your surplus: {usd(surplus)}
+        <h3 className="font-display font-semibold text-lg">
+          Your surplus: <span className="text-moss">{usd(surplus)}</span>
         </h3>
-        <p className="text-sm text-gray-600 mt-0.5">
+        <p className="text-sm text-ink-2 mt-1 leading-relaxed">
           Your Roth IRA is maxed, so this is extra money. Split it however you
           like across the three options below — the plan recomputes instantly.
           There&apos;s no single right answer; it&apos;s a tradeoff between
@@ -74,20 +74,20 @@ export default function SurplusSplitter({
           const weight = Math.max(0, split[opt.choice] ?? 0);
           const pct = total > 0 ? Math.round((weight / total) * 100) : 0;
           return (
-            <div key={opt.choice} className="border border-gray-100 rounded-md p-3">
+            <div key={opt.choice} className="border border-line p-3.5">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block w-3 h-3 rounded-sm"
+                    className="inline-block w-2.5 h-2.5"
                     style={{ backgroundColor: COLORS[opt.choice] }}
                   />
-                  <span className="text-sm font-medium capitalize">
+                  <span className="text-sm font-semibold capitalize">
                     {opt.choice === '401k' ? 'Roth 401(k)' : opt.choice}
                   </span>
                 </div>
-                <span className="text-sm font-semibold">
+                <span className="font-mono text-sm font-semibold">
                   {usd(amounts[opt.choice] ?? 0)}{' '}
-                  <span className="text-xs text-gray-400 font-normal">({pct}%)</span>
+                  <span className="text-xs text-faint font-normal">({pct}%)</span>
                 </span>
               </div>
               <input
@@ -100,12 +100,12 @@ export default function SurplusSplitter({
                 aria-label={`${opt.choice} weight`}
               />
               <div className="grid sm:grid-cols-2 gap-2 mt-2">
-                <ul className="text-xs text-emerald-700 space-y-0.5">
+                <ul className="text-xs text-good space-y-1">
                   {opt.pros.map((p, i) => (
                     <li key={i}>+ {p}</li>
                   ))}
                 </ul>
-                <ul className="text-xs text-red-700 space-y-0.5">
+                <ul className="text-xs text-bad space-y-1">
                   {opt.cons.map((c, i) => (
                     <li key={i}>− {c}</li>
                   ))}
@@ -117,7 +117,7 @@ export default function SurplusSplitter({
       </div>
 
       {total === 0 && (
-        <p className="text-xs text-amber-700">
+        <p className="text-xs text-warn-text">
           All sliders are at zero — the surplus defaults to the taxable brokerage
           until you set a split.
         </p>
@@ -130,7 +130,7 @@ function Preset({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="text-xs border border-gray-300 rounded-full px-3 py-1 hover:bg-gray-50"
+      className="text-xs font-semibold border border-ink/25 rounded-full px-3 py-1 hover:border-moss hover:text-moss transition-colors"
     >
       {label}
     </button>
