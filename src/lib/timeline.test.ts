@@ -99,7 +99,9 @@ describe('simulateTimeline', () => {
   });
 
   it('milestones fire in waterfall order: emergency, then school, then roth', () => {
-    const tl = simulateTimeline(makeProfile(), [schoolGoal(6000)])!;
+    // School target is now 6 × 1400 = 8400 (from the monthly figure), so with
+    // emergency 4200 + roth 7500 = 20,100 total; bump paychecks so all three cap.
+    const tl = simulateTimeline(makeProfile({ paycheckAmount: 7000 }), [])!;
     const order = tl.milestones.map((m) => m.bucket);
     expect(order).toEqual(['emergency', 'school', 'roth']);
     // Dates must be non-decreasing.
@@ -118,10 +120,15 @@ describe('simulateTimeline', () => {
   });
 
   it('roth milestone respects prior contributions', () => {
-    // Room = 7500 - 7000 = 500. Emergency 4200 then school 0 then roth.
+    // Room = 7500 - 7000 = 500. No school-year figure so school target is 0;
+    // emergency basis falls back to summer essentials (1400 × 3 = 4200).
     // pc2 cumulative 6400: emergency 4200 + roth 500 capped -> milestone pc2.
     const tl = simulateTimeline(
-      makeProfile({ rothContributedThisYear: ROTH_IRA_ANNUAL_LIMIT_2026 - 500 }),
+      makeProfile({
+        rothContributedThisYear: ROTH_IRA_ANNUAL_LIMIT_2026 - 500,
+        essentialMonthlyExpenses: 1400,
+        schoolYearMonthlyExpenses: 0, // isolate: no school target in the way
+      }),
       [],
     )!;
     const roth = tl.milestones.find((m) => m.bucket === 'roth')!;
@@ -130,20 +137,26 @@ describe('simulateTimeline', () => {
 
   it('unfinished buckets report the remaining shortfall', () => {
     // Tiny paychecks: 6 x 500 = 3000 total < 4200 emergency target.
-    const tl = simulateTimeline(makeProfile({ paycheckAmount: 500 }), [schoolGoal(6000)])!;
+    const tl = simulateTimeline(makeProfile({ paycheckAmount: 500 }), [])!;
     expect(tl.milestones).toHaveLength(0);
     const em = tl.unfinished.find((u) => u.bucket === 'emergency')!;
     expect(em.remaining).toBe(4200 - 3000);
-    // School and roth got nothing; they report their full targets.
-    expect(tl.unfinished.find((u) => u.bucket === 'school')!.remaining).toBe(6000);
+    // School and roth got nothing; they report their full targets. School target
+    // is now 6 × 1400 school-year expenses = 8400.
+    expect(tl.unfinished.find((u) => u.bucket === 'school')!.remaining).toBe(8400);
     expect(tl.unfinished.find((u) => u.bucket === 'roth')!.remaining).toBe(
       ROTH_IRA_ANNUAL_LIMIT_2026,
     );
   });
 
   it('an already-met bucket completes on the first paycheck', () => {
-    // Emergency already fully funded -> capReached from paycheck 1.
-    const tl = simulateTimeline(makeProfile({ hasEmergencyFund: 4200 }), [])!;
+    // Emergency already fully funded -> capReached from paycheck 1. No school-year
+    // figure, so the emergency basis is summer essentials (2600 × 3 = 7800) and
+    // nothing sits between emergency and roth.
+    const tl = simulateTimeline(
+      makeProfile({ hasEmergencyFund: 7800, schoolYearMonthlyExpenses: 0 }),
+      [],
+    )!;
     const em = tl.milestones.find((m) => m.bucket === 'emergency');
     expect(em).toBeUndefined(); // no need at all -> capReached never true
     // Roth starts filling immediately instead.

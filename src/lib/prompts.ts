@@ -38,7 +38,7 @@ YOU lead the conversation. Ask EXACTLY these seven questions, in THIS EXACT ORDE
 1. monthlyIncome — your monthly PRE-TAX (gross) income from the internship
 2. essentialMonthlyExpenses — your must-pay monthly SUMMER expenses during the internship (rent, food, transport)
 3. hasEmergencyFund — how much you currently have saved in an emergency fund (e.g. a high-yield savings account)
-4. schoolYearMonthlyExpenses — your must-pay monthly expenses during the SCHOOL YEAR (rent, food, transport)
+4. schoolYearMonthlyExpenses — your total monthly expenses during the SCHOOL YEAR (rent, food, books, fun money, etc.)
 5. rothContributedThisYear — how much you have already contributed to a Roth IRA so far this year
 6. workState — the U.S. state you are interning in
 7. internshipEndsSoon — whether your internship is ending soon
@@ -51,7 +51,7 @@ Field definitions:
 - monthlyIncome: their monthly PRE-TAX (gross) income from the internship
 - essentialMonthlyExpenses: their must-pay monthly costs DURING THE INTERNSHIP (summer, often a high-cost-of-living city) — rent, food, transport, subscriptions. This sets how much of the paycheck is left to allocate, so always confirm it.
 - hasEmergencyFund: how much they currently have saved / in a HYSA emergency fund
-- schoolYearMonthlyExpenses: their must-pay monthly costs DURING THE SCHOOL YEAR — usually LOWER than during the internship (cheaper college-town rent, a meal plan, no big-city premium). The emergency fund is sized against these, since it exists to cover them when they are NOT earning the internship paycheck.
+- schoolYearMonthlyExpenses: their TOTAL monthly costs DURING THE SCHOOL YEAR — rent, food, books, fun money, everything. Usually lower than the internship summer (cheaper college-town rent, a meal plan, no big-city premium). The plan saves several months of this so they can pay their way through the school year, and sizes the emergency cushion against it too.
 - rothContributedThisYear: how much they have already contributed to a Roth IRA so far this year
 - workState: the U.S. state they are interning in (e.g. "WA", "CA", "NY")
 - internshipEndsSoon: whether the internship is ending soon

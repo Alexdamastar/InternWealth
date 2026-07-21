@@ -9,6 +9,7 @@ import {
   allocate,
   DEFAULT_EMERGENCY_MONTHS,
   ROTH_IRA_ANNUAL_LIMIT_2026,
+  SCHOOL_YEAR_MONTHS_COVERED,
 } from './engine';
 import {
   DEFAULT_SURPLUS_SPLIT,
@@ -191,7 +192,10 @@ export function simulateTimeline(
         return { bucket: s.bucket, label: s.label, remaining };
       }
       if (s.bucket === 'school') {
-        const target = goals.find((g) => g.kind === 'school')?.targetAmount ?? 0;
+        const target =
+          profile.schoolYearMonthlyExpenses && profile.schoolYearMonthlyExpenses > 0
+            ? SCHOOL_YEAR_MONTHS_COVERED * profile.schoolYearMonthlyExpenses
+            : goals.find((g) => g.kind === 'school')?.targetAmount ?? 0;
         return { bucket: s.bucket, label: s.label, remaining: Math.max(0, target - s.amount) };
       }
       if (s.bucket === 'roth') {

@@ -5,6 +5,7 @@ import {
   DEFAULT_EMERGENCY_MONTHS,
   normalizeSplit,
   ROTH_IRA_ANNUAL_LIMIT_2026,
+  SCHOOL_YEAR_MONTHS_COVERED,
   splitSurplus,
   surplusOptions,
 } from './engine';

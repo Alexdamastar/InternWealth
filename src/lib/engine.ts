@@ -21,6 +21,12 @@ import {
 
 export const DEFAULT_EMERGENCY_MONTHS = 3;
 
+// The school-year fund covers a full stretch of school-year living costs (rent,
+// food, books, fun money) so the intern can pay their way through the year, with
+// the emergency fund kept as a separate cushion ON TOP. Sized in months of
+// school-year expenses.
+export const SCHOOL_YEAR_MONTHS_COVERED = 6;
+
 // CONFIRMED correct by the user.
 export const ROTH_IRA_ANNUAL_LIMIT_2026 = 7500;
 
@@ -182,8 +188,17 @@ export function allocate(
   remaining -= emergencyAmount;
 
   // 2. School-year expenses
+  // Save enough to pay your way through the school year: SCHOOL_YEAR_MONTHS_COVERED
+  // months of school-year living costs (rent, food, books, fun money). This is
+  // funded BEFORE investing and is separate from — and on top of — the emergency
+  // cushion above. If a school-year monthly figure wasn't gathered, fall back to a
+  // manually-entered school goal target.
   const schoolGoal = goals.find((g) => g.kind === 'school');
-  const schoolTarget = schoolGoal?.targetAmount ?? 0;
+  const hasSchoolMonthly =
+    !!profile.schoolYearMonthlyExpenses && profile.schoolYearMonthlyExpenses > 0;
+  const schoolTarget = hasSchoolMonthly
+    ? SCHOOL_YEAR_MONTHS_COVERED * profile.schoolYearMonthlyExpenses!
+    : schoolGoal?.targetAmount ?? 0;
   const schoolAmount = Math.min(remaining, schoolTarget);
   remaining -= schoolAmount;
 
@@ -261,19 +276,23 @@ export function allocate(
       amount: schoolAmount,
       capReached: schoolTarget > 0 && schoolAmount >= schoolTarget,
       math: [
-        `Remaining after emergency fund: ${usd(totalAllocatable)} − ${usd(emergencyAmount)} = ${usd(totalAllocatable - emergencyAmount)}.`,
+        hasSchoolMonthly
+          ? `Target: ${SCHOOL_YEAR_MONTHS_COVERED} months × ${usd(profile.schoolYearMonthlyExpenses!)} school-year expenses = ${usd(schoolTarget)}.`
+          : `Remaining after emergency fund: ${usd(totalAllocatable)} − ${usd(emergencyAmount)} = ${usd(totalAllocatable - emergencyAmount)}.`,
         schoolTarget > 0
-          ? `Allocated: the smaller of your ${usd(schoolTarget)} goal and ${usd(totalAllocatable - emergencyAmount)} remaining = ${usd(schoolAmount)}.`
-          : `No school-year goal set, so nothing is reserved here (${usd(0)}).`,
+          ? `Allocated: the smaller of your ${usd(schoolTarget)} target and ${usd(totalAllocatable - emergencyAmount)} remaining = ${usd(schoolAmount)}.`
+          : `No school-year expenses given, so nothing is reserved here (${usd(0)}).`,
       ],
       rationale:
-        schoolGoal && schoolTarget > 0
-          ? `Set aside ${usd(schoolTarget)} to cover tuition gaps, rent, and tech ` +
-            `for the upcoming school year before investing — near-term ` +
-            `obligations come before long-term growth.`
-          : `No school-year goal was set, so nothing is reserved here. If you ` +
-            `have tuition gaps, rent, or tech costs coming up, cover those ` +
-            `before investing.`,
+        schoolTarget > 0
+          ? `Set aside ${usd(schoolTarget)} — about ${SCHOOL_YEAR_MONTHS_COVERED} months ` +
+            `of your school-year costs (rent, food, books, fun money) — so you can pay ` +
+            `your way through the year before investing. This is separate from, and on ` +
+            `top of, your emergency cushion; near-term obligations come before ` +
+            `long-term growth.`
+          : `No school-year expenses were given, so nothing is reserved here. Tell us ` +
+            `your monthly school-year costs and we'll set aside ${SCHOOL_YEAR_MONTHS_COVERED} ` +
+            `months of them before investing.`,
     },
     {
       bucket: 'roth',
